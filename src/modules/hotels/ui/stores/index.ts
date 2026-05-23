@@ -1,0 +1,1 @@
+export { useHotelStore } from "./hotelStore";
