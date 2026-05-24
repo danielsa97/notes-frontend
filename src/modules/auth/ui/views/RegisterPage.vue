@@ -4,9 +4,6 @@
   >
     <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
       <div class="text-center mb-8">
-        <div class="flex justify-end mb-2">
-          <LanguageSwitcher />
-        </div>
         <h1 class="text-2xl font-bold text-gray-900">
           {{ t("auth.register.title") }}
         </h1>
@@ -93,7 +90,6 @@ import FormGroup from "@/shared/components/FormGroup.vue";
 import Input from "@/shared/components/Input.vue";
 import Button from "@/shared/components/Button.vue";
 import Alert from "@/shared/components/Alert.vue";
-import LanguageSwitcher from "@/shared/components/LanguageSwitcher.vue";
 
 const authStore = useAuthStore();
 const { t } = useI18n();

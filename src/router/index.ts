@@ -6,11 +6,12 @@ import {
   RouteLocationNormalized,
 } from "vue-router";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/dashboard",
+    redirect: "/hotel-select",
   },
   {
     path: "/login",
@@ -18,14 +19,23 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresGuest: true },
   },
   {
-    path: "/users/new",
-    component: () => import("@/modules/auth/ui/views/RegisterPage.vue"),
+    path: "/hotel-select",
+    component: () => import("@/modules/hotels/ui/views/HotelSelectPage.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/users",
+    component: () => import("@/modules/auth/ui/views/UsersPage.vue"),
     meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: "/users/new",
+    redirect: "/users",
   },
   {
     path: "/dashboard",
     component: () => import("@/modules/hotels/ui/views/DashboardPage.vue"),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresWorkspace: true },
   },
   {
     path: "/hotels",
@@ -34,7 +44,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/:pathMatch(.*)*",
-    redirect: "/dashboard",
+    redirect: "/hotel-select",
   },
 ];
 
@@ -43,7 +53,6 @@ const router = createRouter({
   routes,
 });
 
-// Navigation guards
 router.beforeEach(
   async (
     to: RouteLocationNormalized,
@@ -52,28 +61,30 @@ router.beforeEach(
   ) => {
     const authStore = useAuthStore();
 
-    // Check if route requires authentication
     if (to.meta.requiresAuth) {
       if (!authStore.isAuthenticated) {
-        next("/login");
-      } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
-        next("/dashboard");
-      } else {
-        next();
+        return next("/login");
       }
+      if (to.meta.requiresAdmin && !authStore.isAdmin) {
+        return next("/dashboard");
+      }
+      if (to.meta.requiresWorkspace) {
+        const workspaceStore = useWorkspaceStore();
+        if (!workspaceStore.activeHotel) {
+          return next("/hotel-select");
+        }
+      }
+      return next();
     }
-    // Check if route requires guest (no authentication)
-    else if (to.meta.requiresGuest) {
+
+    if (to.meta.requiresGuest) {
       if (authStore.isAuthenticated) {
-        next("/dashboard");
-      } else {
-        next();
+        return next("/hotel-select");
       }
+      return next();
     }
-    // No restrictions
-    else {
-      next();
-    }
+
+    return next();
   },
 );
 

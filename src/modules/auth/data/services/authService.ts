@@ -1,4 +1,5 @@
 import { apiRequest } from "@/core/utils/apiClient";
+import type { User } from "@/core/utils/types";
 
 type LoginResponse = {
   token: string;
@@ -12,6 +13,15 @@ type LoginResponse = {
   };
 };
 
+type RegisteredUser = {
+  id: string;
+  username: string;
+  full_name: string;
+  is_admin: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 type RegisterPayload = {
   username: string;
   password: string;
@@ -21,7 +31,7 @@ type RegisterPayload = {
 
 export const authService = {
   async register(payload: RegisterPayload, token: string) {
-    return apiRequest<{ user: unknown }>("/auth/register", {
+    return apiRequest<{ user: RegisteredUser }>("/auth/register", {
       method: "POST",
       body: payload,
       token,
@@ -31,10 +41,7 @@ export const authService = {
   async login(username: string, password: string) {
     return apiRequest<LoginResponse>("/auth/login", {
       method: "POST",
-      body: {
-        username,
-        password,
-      },
+      body: { username, password },
     });
   },
 
@@ -47,5 +54,17 @@ export const authService = {
 
   async logout() {
     return Promise.resolve();
+  },
+
+  async listUsers(token: string) {
+    return apiRequest<{ users: User[] }>("/auth/users", { token });
+  },
+
+  async updateUserHotels(userId: string, hotelIds: string[], token: string) {
+    return apiRequest<{ ok: boolean }>(`/auth/users/${userId}/hotels`, {
+      method: "PUT",
+      body: { hotelIds },
+      token,
+    });
   },
 };

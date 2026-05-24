@@ -6,7 +6,7 @@
           <h1 class="text-3xl font-bold text-gray-900">{{ t("hotels.title") }}</h1>
           <p class="text-gray-600">{{ t("hotels.subtitle") }}</p>
         </div>
-        <Button @click="openAddModal">{{ t("hotels.add") }}</Button>
+        <Button v-if="authStore.isAdmin" @click="openAddModal">{{ t("hotels.add") }}</Button>
       </div>
 
       <Alert
@@ -46,12 +46,12 @@
                   {{ statusLabel(hotel.status) }}
                 </Badge>
               </div>
-              <div class="relative">
+              <div v-if="authStore.isAdmin" class="relative">
                 <button
                   @click="openMenu(hotel.id)"
                   class="p-2 hover:bg-gray-100 rounded-lg transition"
                 >
-                  ⋮
+                  <MoreVertical class="w-5 h-5 text-gray-500" />
                 </button>
                 <div
                   v-if="activeMenu === hotel.id"
@@ -92,7 +92,7 @@
           <p class="text-gray-600 text-lg mb-4">
             {{ t("hotels.empty") }}
           </p>
-          <Button @click="openAddModal">{{ t("hotels.createFirst") }}</Button>
+          <Button v-if="authStore.isAdmin" @click="openAddModal">{{ t("hotels.createFirst") }}</Button>
         </div>
       </div>
 
@@ -176,6 +176,7 @@ import FormGroup from "@/shared/components/FormGroup.vue";
 import Alert from "@/shared/components/Alert.vue";
 import Loading from "@/shared/components/Loading.vue";
 import Badge from "@/shared/components/Badge.vue";
+import { MoreVertical } from "lucide-vue-next";
 import type { Hotel } from "@/core/utils/types";
 
 const hotelStore = useHotelStore();

@@ -8,7 +8,7 @@
         class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
         :class="{ 'bg-blue-50 text-blue-600 font-medium': isActive(item.path) }"
       >
-        <span class="text-xl">{{ item.icon }}</span>
+        <component :is="item.icon" class="w-5 h-5" />
         <span>{{ item.label }}</span>
       </router-link>
     </nav>
@@ -36,6 +36,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { LayoutDashboard, Building2, Users } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -43,10 +44,10 @@ const authStore = useAuthStore();
 const { t } = useI18n();
 
 const navItems = computed(() => [
-  { path: "/dashboard", label: t("navigation.dashboard"), icon: "📊" },
-  { path: "/hotels", label: t("navigation.hotels"), icon: "🏨" },
+  { path: "/dashboard", label: t("navigation.dashboard"), icon: LayoutDashboard },
+  { path: "/hotels", label: t("navigation.hotels"), icon: Building2 },
   ...(authStore.user?.is_admin
-    ? [{ path: "/users/new", label: t("navigation.newUser"), icon: "👤" }]
+    ? [{ path: "/users", label: t("navigation.users"), icon: Users }]
     : []),
 ]);
 
@@ -59,7 +60,7 @@ const userEmail = computed(() => {
 });
 
 function isActive(path: string) {
-  return route.path === path;
+  return route.path === path || route.path.startsWith(path + "/");
 }
 
 async function handleLogout() {

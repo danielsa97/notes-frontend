@@ -1,118 +1,84 @@
-import { supabase } from "@/modules/auth/data/services/supabaseClient";
+import { apiRequest, API_BASE_URL } from "@/core/utils/apiClient";
 import type { Hotel } from "@/core/utils/types";
 import { i18n } from "@/core/i18n";
-
-const HOTEL_IMAGES_BUCKET =
-  import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || "Files";
 
 type CreateHotelPayload = Omit<
   Hotel,
   "id" | "created_at" | "updated_at" | "image_urls"
 >;
 
-async function uploadHotelImages(ownerId: string, imageFiles: File[]) {
-  const uploadedPaths: string[] = [];
-
-  try {
-    for (const file of imageFiles) {
-      const sanitizedName = file.name.replace(/\s+/g, "-").toLowerCase();
-      const filePath = `hotels/${ownerId}/${crypto.randomUUID()}-${sanitizedName}`;
-
-      const { error } = await supabase.storage
-        .from(HOTEL_IMAGES_BUCKET)
-        .upload(filePath, file);
-
-      if (error) {
-        throw error;
-      }
-
-      uploadedPaths.push(filePath);
-    }
-
-    return uploadedPaths.map((filePath) => {
-      const { data } = supabase.storage
-        .from(HOTEL_IMAGES_BUCKET)
-        .getPublicUrl(filePath);
-      return data.publicUrl;
-    });
-  } catch (error) {
-    if (uploadedPaths.length > 0) {
-      await supabase.storage.from(HOTEL_IMAGES_BUCKET).remove(uploadedPaths);
-    }
-    throw error;
-  }
-}
-
 export const hotelService = {
-  async getHotels() {
-    const { data, error } = await supabase
-      .from("hotels")
-      .select("*")
-      .order("created_at", { ascending: false });
-    return { data, error };
+  async getHotels(token: string) {
+    const data = await apiRequest<Hotel[]>("/hotels", { token });
+    return { data, error: null };
   },
 
-  async getHotelById(id: string) {
-    const { data, error } = await supabase
-      .from("hotels")
-      .select("*")
-      .eq("id", id)
-      .single();
-    return { data, error };
+  async getHotelById(id: string, token: string) {
+    const data = await apiRequest<Hotel>(`/hotels/${id}`, { token });
+    return { data, error: null };
   },
 
-  async createHotel(hotel: CreateHotelPayload, imageFiles: File[] = []) {
+  async createHotel(
+    hotel: CreateHotelPayload,
+    imageFiles: File[] = [],
+    token: string,
+  ) {
     if (imageFiles.length > 3) {
       throw new Error(i18n.global.t("hotels.maxImagesError"));
     }
 
-    const imageUrls =
-      imageFiles.length > 0
-        ? await uploadHotelImages(hotel.owner_id, imageFiles)
-        : [];
-
-    const { data, error } = await supabase
-      .from("hotels")
-      .insert([{ ...hotel, image_urls: imageUrls }])
-      .select();
-
-    if (error && imageUrls.length > 0) {
-      const pathsToRemove = imageUrls
-        .map((url) => {
-          const marker = `/storage/v1/object/public/${HOTEL_IMAGES_BUCKET}/`;
-          const index = url.indexOf(marker);
-          if (index === -1) return null;
-          return url.slice(index + marker.length);
-        })
-        .filter((path): path is string => Boolean(path));
-
-      if (pathsToRemove.length > 0) {
-        await supabase.storage.from(HOTEL_IMAGES_BUCKET).remove(pathsToRemove);
-      }
+    const formData = new FormData();
+    formData.append("name", hotel.name);
+    if (hotel.description) formData.append("description", hotel.description);
+    formData.append("status", hotel.status);
+    for (const file of imageFiles) {
+      formData.append("images", file);
     }
 
-    return { data, error };
+    const response = await fetch(`${API_BASE_URL}/hotels`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData?.error || i18n.global.t("common.requestFailed"),
+      );
+    }
+
+    const data = await response.json();
+    return { data: [data] as Hotel[], error: null };
   },
 
-  async updateHotel(id: string, updates: Partial<Hotel>) {
-    const { data, error } = await supabase
-      .from("hotels")
-      .update(updates)
-      .eq("id", id)
-      .select();
-    return { data, error };
+  async updateHotel(id: string, updates: Partial<Hotel>, token: string) {
+    const data = await apiRequest<Hotel>(`/hotels/${id}`, {
+      method: "PUT",
+      body: updates,
+      token,
+    });
+    return { data: [data] as Hotel[], error: null };
   },
 
-  async deleteHotel(id: string) {
-    const { error } = await supabase.from("hotels").delete().eq("id", id);
-    return { error };
+  async deleteHotel(id: string, token: string) {
+    await apiRequest<void>(`/hotels/${id}`, { method: "DELETE", token });
+    return { error: null };
   },
 
-  async toggleHotelStatus(id: string, status: "ativo" | "inativo") {
-    return this.updateHotel(id, { status });
+  async toggleHotelStatus(
+    id: string,
+    status: "ativo" | "inativo",
+    token: string,
+  ) {
+    return this.updateHotel(id, { status }, token);
   },
 
-  async archiveHotel(id: string) {
-    return this.updateHotel(id, { archived: true });
+  async archiveHotel(id: string, token: string) {
+    await apiRequest<void>(`/hotels/${id}/archive`, {
+      method: "PATCH",
+      token,
+    });
+    return { error: null };
   },
 };

@@ -7,17 +7,21 @@ export interface User {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
+  hotel_memberships?: Array<{
+    hotel_id: string;
+    role: "owner" | "collaborator";
+  }>;
 }
 
 // Hotel types
 export interface Hotel {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   status: "ativo" | "inativo";
   image_urls?: string[];
   archived: boolean;
-  owner_id: string;
+  my_role?: "owner" | "collaborator";
   created_at: string;
   updated_at: string;
 }

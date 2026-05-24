@@ -16,7 +16,7 @@
               <p class="text-gray-600 text-sm">{{ t("dashboard.totalHotels") }}</p>
               <p class="text-3xl font-bold text-gray-900">{{ totalHotels }}</p>
             </div>
-            <span class="text-4xl">🏨</span>
+            <Building2 class="w-10 h-10 text-gray-400" />
           </div>
         </Card>
 
@@ -28,7 +28,7 @@
                 {{ activeHotels }}
               </p>
             </div>
-            <span class="text-4xl">✓</span>
+            <CheckCircle2 class="w-10 h-10 text-green-400" />
           </div>
         </Card>
 
@@ -40,7 +40,7 @@
                 {{ pendingTasks }}
               </p>
             </div>
-            <span class="text-4xl">📋</span>
+            <ClipboardList class="w-10 h-10 text-yellow-400" />
           </div>
         </Card>
       </div>
@@ -83,6 +83,7 @@ import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Card from "@/shared/components/Card.vue";
+import { Building2, CheckCircle2, ClipboardList } from "lucide-vue-next";
 
 const authStore = useAuthStore();
 const hotelStore = useHotelStore();

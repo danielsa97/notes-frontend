@@ -11,19 +11,16 @@ export default {
   language: {
     label: "Idioma",
     ptBR: "Português (BR)",
-    enUS: "English (US)",
   },
   navigation: {
     dashboard: "Dashboard",
     hotels: "Hoteis",
-    newUser: "Novo Usuario",
+    users: "Usuários",
     logout: "Sair",
     admin: "Admin",
   },
   auth: {
     login: {
-      title: "Hotel Mindu",
-      subtitle: "Faca login para continuar",
       username: "Login",
       usernamePlaceholder: "Seu nome de usuário",
       password: "Senha",
@@ -114,5 +111,46 @@ export default {
   },
   button: {
     loading: "Carregando...",
+  },
+  workspace: {
+    selectTitle: "Selecionar Hotel",
+    selectSubtitle: "Escolha o hotel que deseja gerenciar",
+    noHotels: "Você ainda não tem acesso a nenhum hotel",
+    createHotel: "Criar Primeiro Hotel",
+    noDescription: "Sem descrião",
+    owner: "Proprietário",
+    switchTitle: "Trocar Hotel",
+    switchSubtitle: "Selecione um hotel para gerenciar",
+    currentHotel: "Hotel atual",
+  },
+  users: {
+    title: "Usuários",
+    subtitle: "Gerencie todos os usuários do sistema",
+    add: "+ Novo Usuário",
+    loading: "Carregando usuários...",
+    empty: "Nenhum usuário cadastrado",
+    errorTitle: "Erro",
+    modalTitle: "Novo Usuário",
+    table: {
+      name: "Nome",
+      username: "Username",
+      role: "Perfil",
+      createdAt: "Criado em",
+      hotels: "Hotéis",
+      actions: "Ações",
+    },
+    role: {
+      admin: "Administrador",
+      user: "Usuário",
+    },
+    associateHotels: "Associar a hotéis (colaborador)",
+    manageHotels: "Gerenciar hotéis",
+    manageHotelsTitle: "Hotéis de {name}",
+    hotelCount: "hotel(is)",
+    errors: {
+      fetchUsers: "Falha ao carregar usuários.",
+      createUser: "Falha ao criar usuário.",
+      updateHotels: "Falha ao atualizar hotéis do usuário.",
+    },
   },
 };

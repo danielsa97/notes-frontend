@@ -26,7 +26,6 @@
       </nav>
 
       <div class="flex items-center gap-4">
-        <LanguageSwitcher class="hidden md:inline-flex" />
         <button
           class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
         >
@@ -56,7 +55,6 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
-import LanguageSwitcher from "@/shared/components/LanguageSwitcher.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();

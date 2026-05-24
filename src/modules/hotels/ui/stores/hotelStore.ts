@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { hotelService } from "@/modules/hotels/data/services/hotelService";
+import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import type { Hotel } from "@/core/utils/types";
 import { i18n } from "@/core/i18n";
 
@@ -21,7 +22,8 @@ export const useHotelStore = defineStore("hotel", () => {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await hotelService.getHotels();
+      const token = useAuthStore().token ?? "";
+      const { data, error: err } = await hotelService.getHotels(token);
       if (err) throw err;
       hotels.value = data || [];
     } catch (err) {
@@ -36,7 +38,8 @@ export const useHotelStore = defineStore("hotel", () => {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await hotelService.getHotelById(id);
+      const token = useAuthStore().token ?? "";
+      const { data, error: err } = await hotelService.getHotelById(id, token);
       if (err) throw err;
       currentHotel.value = data;
     } catch (err) {
@@ -54,9 +57,11 @@ export const useHotelStore = defineStore("hotel", () => {
     loading.value = true;
     error.value = null;
     try {
+      const token = useAuthStore().token ?? "";
       const { data, error: err } = await hotelService.createHotel(
         hotel,
         imageFiles,
+        token,
       );
       if (err) throw err;
       if (data) hotels.value.push(...data);
@@ -73,7 +78,12 @@ export const useHotelStore = defineStore("hotel", () => {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await hotelService.updateHotel(id, updates);
+      const token = useAuthStore().token ?? "";
+      const { data, error: err } = await hotelService.updateHotel(
+        id,
+        updates,
+        token,
+      );
       if (err) throw err;
       const index = hotels.value.findIndex((h) => h.id === id);
       if (index !== -1 && data) {
@@ -92,7 +102,8 @@ export const useHotelStore = defineStore("hotel", () => {
     loading.value = true;
     error.value = null;
     try {
-      const { error: err } = await hotelService.deleteHotel(id);
+      const token = useAuthStore().token ?? "";
+      const { error: err } = await hotelService.deleteHotel(id, token);
       if (err) throw err;
       hotels.value = hotels.value.filter((h) => h.id !== id);
     } catch (err) {

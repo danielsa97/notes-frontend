@@ -95,6 +95,11 @@ export const useAuthStore = defineStore("auth", () => {
       token.value = null;
       setStoredUser(null);
       setStoredToken(null);
+      // Clear active workspace
+      const { useWorkspaceStore } = await import(
+        "@/modules/hotels/ui/stores/workspaceStore"
+      );
+      useWorkspaceStore().clearActiveHotel();
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : t("auth.errors.logoutFailed");
