@@ -7,7 +7,7 @@
         >
           <span class="text-white font-bold text-lg">M</span>
         </div>
-        <h1 class="text-xl font-bold text-gray-900">Hotel Mindu</h1>
+        <h1 class="text-xl font-bold text-gray-900">{{ t("common.appName") }}</h1>
       </div>
 
       <nav class="hidden md:flex items-center gap-8">
@@ -15,17 +15,18 @@
           to="/dashboard"
           class="text-gray-600 hover:text-gray-900 transition"
         >
-          Dashboard
+          {{ t("navigation.dashboard") }}
         </router-link>
         <router-link
           to="/hotels"
           class="text-gray-600 hover:text-gray-900 transition"
         >
-          Hotéis
+          {{ t("navigation.hotels") }}
         </router-link>
       </nav>
 
       <div class="flex items-center gap-4">
+        <LanguageSwitcher class="hidden md:inline-flex" />
         <button
           class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
         >
@@ -37,7 +38,7 @@
           @click="handleLogout"
           class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition text-sm font-medium"
         >
-          Sair
+          {{ t("navigation.logout") }}
         </button>
       </div>
     </div>
@@ -47,13 +48,16 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import LanguageSwitcher from "@/shared/components/LanguageSwitcher.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const userEmail = computed(() => {
-  return authStore.user?.username || "usuario";
+  return authStore.user?.username || t("common.userFallback");
 });
 
 async function handleLogout() {

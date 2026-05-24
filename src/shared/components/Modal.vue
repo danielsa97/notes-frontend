@@ -26,9 +26,9 @@
             <div class="flex gap-3 p-6 border-t border-gray-200">
               <slot name="footer">
                 <Button variant="ghost" @click="emit('close')">
-                  Cancelar
+                  {{ t("common.cancel") }}
                 </Button>
-                <Button @click="emit('confirm')"> Confirmar </Button>
+                <Button @click="emit('confirm')">{{ t("common.confirm") }}</Button>
               </slot>
             </div>
           </div>
@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Button from "./Button.vue";
 
 interface Props {
@@ -54,6 +55,8 @@ const emit = defineEmits<{
   close: [];
   confirm: [];
 }>();
+
+const { t } = useI18n();
 </script>
 
 <style scoped>

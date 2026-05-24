@@ -3,20 +3,20 @@
     <div class="max-w-7xl mx-auto px-4 py-8">
       <div class="flex justify-between items-center mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Hotéis</h1>
-          <p class="text-gray-600">Gerencie todos os seus hotéis</p>
+          <h1 class="text-3xl font-bold text-gray-900">{{ t("hotels.title") }}</h1>
+          <p class="text-gray-600">{{ t("hotels.subtitle") }}</p>
         </div>
-        <Button @click="openAddModal">+ Adicionar Hotel</Button>
+        <Button @click="openAddModal">{{ t("hotels.add") }}</Button>
       </div>
 
       <Alert
         v-if="hotelStore.error"
         type="error"
-        title="Erro"
+        :title="t('hotels.errorTitle')"
         :message="hotelStore.error"
       />
 
-      <Loading v-if="hotelStore.loading" text="Carregando hotéis..." />
+      <Loading v-if="hotelStore.loading" :text="t('hotels.loading')" />
 
       <div v-else class="space-y-4">
         <div
@@ -31,7 +31,7 @@
             <img
               v-if="hotel.image_urls?.length"
               :src="hotel.image_urls[0]"
-              :alt="`Imagem do hotel ${hotel.name}`"
+              :alt="t('hotels.imageAlt', { name: hotel.name })"
               class="w-full h-40 object-cover rounded-lg mb-4"
             />
 
@@ -43,7 +43,7 @@
                 <Badge
                   :variant="hotel.status === 'ativo' ? 'success' : 'warning'"
                 >
-                  {{ hotel.status }}
+                  {{ statusLabel(hotel.status) }}
                 </Badge>
               </div>
               <div class="relative">
@@ -61,19 +61,19 @@
                     @click="editHotel(hotel)"
                     class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition"
                   >
-                    Editar
+                    {{ t("hotels.edit") }}
                   </button>
                   <button
                     @click="archiveHotel(hotel.id)"
                     class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-orange-600"
                   >
-                    Arquivar
+                    {{ t("hotels.archive") }}
                   </button>
                   <button
                     @click="deleteHotel(hotel.id)"
                     class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-red-600"
                   >
-                    Deletar
+                    {{ t("hotels.delete") }}
                   </button>
                 </div>
               </div>
@@ -83,53 +83,53 @@
               {{ hotel.description }}
             </p>
             <div class="flex items-center gap-2 text-sm text-gray-500">
-              <span>Criado em {{ formatDate(hotel.created_at) }}</span>
+              <span>{{ t("hotels.createdAt", { date: formatDate(hotel.created_at) }) }}</span>
             </div>
           </Card>
         </div>
 
         <div v-else class="bg-white rounded-lg shadow p-12 text-center">
           <p class="text-gray-600 text-lg mb-4">
-            Nenhum hotel cadastrado ainda
+            {{ t("hotels.empty") }}
           </p>
-          <Button @click="openAddModal">Criar Primeiro Hotel</Button>
+          <Button @click="openAddModal">{{ t("hotels.createFirst") }}</Button>
         </div>
       </div>
 
       <Modal
         :isOpen="isModalOpen"
-        :title="editingHotel ? 'Editar Hotel' : 'Adicionar Hotel'"
+        :title="editingHotel ? t('hotels.modalEditTitle') : t('hotels.modalAddTitle')"
         @close="closeModal"
         @confirm="saveHotel"
       >
         <FormGroup @submit="saveHotel">
           <Input
             v-model="form.name"
-            label="Nome do Hotel"
-            placeholder="Ex: Hotel Central"
+            :label="t('hotels.hotelName')"
+            :placeholder="t('hotels.hotelNamePlaceholder')"
             required
           />
           <Input
             v-model="form.description"
-            label="Descrição"
-            placeholder="Descreva o hotel..."
+            :label="t('hotels.description')"
+            :placeholder="t('hotels.descriptionPlaceholder')"
           />
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Status</label
+              >{{ t("hotels.status") }}</label
             >
             <select
               v-model="form.status"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
+              <option value="ativo">{{ t("hotels.statusValues.ativo") }}</option>
+              <option value="inativo">{{ t("hotels.statusValues.inativo") }}</option>
             </select>
           </div>
 
           <div v-if="!editingHotel">
             <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Imagens (até 3)</label
+              >{{ t("hotels.imageUploadLabel") }}</label
             >
             <input
               :key="imageInputKey"
@@ -140,7 +140,7 @@
               class="w-full px-4 py-2 border border-gray-300 rounded-lg"
             />
             <p class="text-xs text-gray-500 mt-2">
-              Formatos de imagem suportados. Máximo de 3 arquivos.
+              {{ t("hotels.imageUploadHint") }}
             </p>
 
             <div
@@ -151,7 +151,7 @@
                 v-for="preview in imagePreviews"
                 :key="preview"
                 :src="preview"
-                alt="Pré-visualização"
+                :alt="t('hotels.imagePreviewAlt')"
                 class="h-20 w-full object-cover rounded-md border border-gray-200"
               />
             </div>
@@ -164,6 +164,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
@@ -179,6 +180,7 @@ import type { Hotel } from "@/core/utils/types";
 
 const hotelStore = useHotelStore();
 const authStore = useAuthStore();
+const { t, locale } = useI18n();
 
 const isModalOpen = ref(false);
 const activeMenu = ref<string | null>(null);
@@ -204,14 +206,14 @@ function handleImageSelection(event: Event) {
   const files = Array.from(input.files || []);
 
   if (files.length > 3) {
-    alert("Você pode selecionar no máximo 3 imagens.");
+    alert(t("hotels.maxImagesError"));
     input.value = "";
     return;
   }
 
   const hasInvalidType = files.some((file) => !file.type.startsWith("image/"));
   if (hasInvalidType) {
-    alert("Selecione apenas arquivos de imagem.");
+    alert(t("hotels.invalidImageError"));
     input.value = "";
     return;
   }
@@ -265,12 +267,12 @@ async function saveHotel() {
     }
     closeModal();
   } catch (error) {
-    console.error("Erro ao salvar hotel:", error);
+    console.error(t("hotels.saveError"), error);
   }
 }
 
 async function deleteHotel(id: string) {
-  if (confirm("Tem certeza que deseja deletar este hotel?")) {
+  if (confirm(t("hotels.deleteConfirm"))) {
     await hotelStore.deleteHotel(id);
     activeMenu.value = null;
   }
@@ -286,7 +288,11 @@ function openMenu(hotelId: string) {
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("pt-BR");
+  return new Date(date).toLocaleDateString(locale.value);
+}
+
+function statusLabel(status: "ativo" | "inativo") {
+  return t(`hotels.statusValues.${status}`);
 }
 
 onMounted(async () => {

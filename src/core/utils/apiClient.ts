@@ -1,3 +1,5 @@
+import { i18n } from "@/core/i18n";
+
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
@@ -34,7 +36,7 @@ export async function apiRequest<T>(
   const data = await response.json();
 
   if (!response.ok) {
-    const message = data?.error || "Request failed";
+    const message = data?.error || i18n.global.t("common.requestFailed");
     throw new Error(message);
   }
 

@@ -2,8 +2,11 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { hotelService } from "@/modules/hotels/data/services/hotelService";
 import type { Hotel } from "@/core/utils/types";
+import { i18n } from "@/core/i18n";
 
 export const useHotelStore = defineStore("hotel", () => {
+  const t = i18n.global.t;
+
   const hotels = ref<Hotel[]>([]);
   const currentHotel = ref<Hotel | null>(null);
   const loading = ref(false);
@@ -23,7 +26,7 @@ export const useHotelStore = defineStore("hotel", () => {
       hotels.value = data || [];
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch hotels";
+        err instanceof Error ? err.message : t("hotels.errors.fetchHotels");
     } finally {
       loading.value = false;
     }
@@ -38,7 +41,7 @@ export const useHotelStore = defineStore("hotel", () => {
       currentHotel.value = data;
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch hotel";
+        err instanceof Error ? err.message : t("hotels.errors.fetchHotel");
     } finally {
       loading.value = false;
     }
@@ -60,7 +63,7 @@ export const useHotelStore = defineStore("hotel", () => {
       return data;
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to create hotel";
+        err instanceof Error ? err.message : t("hotels.errors.createHotel");
     } finally {
       loading.value = false;
     }
@@ -79,7 +82,7 @@ export const useHotelStore = defineStore("hotel", () => {
       return data;
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to update hotel";
+        err instanceof Error ? err.message : t("hotels.errors.updateHotel");
     } finally {
       loading.value = false;
     }
@@ -94,7 +97,7 @@ export const useHotelStore = defineStore("hotel", () => {
       hotels.value = hotels.value.filter((h) => h.id !== id);
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to delete hotel";
+        err instanceof Error ? err.message : t("hotels.errors.deleteHotel");
     } finally {
       loading.value = false;
     }

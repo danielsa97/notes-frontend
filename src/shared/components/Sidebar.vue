@@ -25,7 +25,7 @@
         @click="handleLogout"
         class="w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
       >
-        Sair
+        {{ t("navigation.logout") }}
       </button>
     </div>
   </aside>
@@ -34,18 +34,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
-const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: "📊" },
-  { path: "/hotels", label: "Hotéis", icon: "🏨" },
-];
+const navItems = computed(() => [
+  { path: "/dashboard", label: t("navigation.dashboard"), icon: "📊" },
+  { path: "/hotels", label: t("navigation.hotels"), icon: "🏨" },
+]);
 
-const userName = computed(() => authStore.user?.full_name || "Usuário");
+const userName = computed(() => authStore.user?.full_name || t("common.userFallback"));
 const userEmail = computed(() => authStore.user?.username || "");
 
 function isActive(path: string) {

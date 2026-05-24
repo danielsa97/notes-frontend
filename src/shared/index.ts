@@ -7,3 +7,4 @@ export { default as Alert } from "./components/Alert.vue";
 export { default as Loading } from "./components/Loading.vue";
 export { default as FormGroup } from "./components/FormGroup.vue";
 export { default as Badge } from "./components/Badge.vue";
+export { default as LanguageSwitcher } from "./components/LanguageSwitcher.vue";

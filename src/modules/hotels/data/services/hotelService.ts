@@ -1,5 +1,6 @@
 import { supabase } from "@/modules/auth/data/services/supabaseClient";
 import type { Hotel } from "@/core/utils/types";
+import { i18n } from "@/core/i18n";
 
 const HOTEL_IMAGES_BUCKET =
   import.meta.env.VITE_SUPABASE_STORAGE_BUCKET || "Files";
@@ -62,7 +63,7 @@ export const hotelService = {
 
   async createHotel(hotel: CreateHotelPayload, imageFiles: File[] = []) {
     if (imageFiles.length > 3) {
-      throw new Error("Você pode enviar no máximo 3 imagens por hotel.");
+      throw new Error(i18n.global.t("hotels.maxImagesError"));
     }
 
     const imageUrls =

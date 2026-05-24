@@ -15,13 +15,14 @@
     </span>
     <span v-else class="inline-flex items-center gap-2">
       <span class="animate-spin">⟳</span>
-      Carregando...
+      {{ t("button.loading") }}
     </span>
   </button>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -41,6 +42,8 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
 });
+
+const { t } = useI18n();
 
 defineEmits<{
   click: [];

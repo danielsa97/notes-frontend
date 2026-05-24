@@ -3,8 +3,11 @@ import { ref, computed } from "vue";
 import { authService } from "@/modules/auth/data/services/authService";
 import useLocalStorage from "@/core/utils/composables/useLocalStorage";
 import type { User } from "@/core/utils/types";
+import { i18n } from "@/core/i18n";
 
 export const useAuthStore = defineStore("auth", () => {
+  const t = i18n.global.t;
+
   const { value: storedUser, setItem: setStoredUser } = useLocalStorage(
     "auth_user",
     null,
@@ -42,7 +45,8 @@ export const useAuthStore = defineStore("auth", () => {
       setStoredToken(data.token);
       return data;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Login failed";
+      error.value =
+        err instanceof Error ? err.message : t("auth.errors.loginFailed");
       throw err;
     } finally {
       loading.value = false;
@@ -56,7 +60,7 @@ export const useAuthStore = defineStore("auth", () => {
     isAdminUser = false,
   ) {
     if (!token.value) {
-      throw new Error("Sessao invalida. Faca login novamente.");
+      throw new Error(t("auth.sessionInvalid"));
     }
 
     loading.value = true;
@@ -72,7 +76,10 @@ export const useAuthStore = defineStore("auth", () => {
         token.value,
       );
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Registration failed";
+      error.value =
+        err instanceof Error
+          ? err.message
+          : t("auth.errors.registrationFailed");
       throw err;
     } finally {
       loading.value = false;
@@ -89,7 +96,8 @@ export const useAuthStore = defineStore("auth", () => {
       setStoredUser(null);
       setStoredToken(null);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Logout failed";
+      error.value =
+        err instanceof Error ? err.message : t("auth.errors.logoutFailed");
       throw err;
     } finally {
       loading.value = false;

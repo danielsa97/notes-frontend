@@ -4,21 +4,26 @@
   >
     <div class="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Criar Usuário</h1>
-        <p class="text-gray-600 text-sm">Disponível apenas para administradores</p>
+        <div class="flex justify-end mb-2">
+          <LanguageSwitcher />
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          {{ t("auth.register.title") }}
+        </h1>
+        <p class="text-gray-600 text-sm">{{ t("auth.register.subtitle") }}</p>
       </div>
 
       <Alert
         v-if="error"
         type="error"
-        title="Erro no cadastro"
+        :title="t('auth.register.errorTitle')"
         :message="error"
       />
 
       <Alert
         v-if="successMessage"
         type="success"
-        title="Usuário criado"
+        :title="t('auth.register.successTitle')"
         :message="successMessage"
       />
 
@@ -26,23 +31,23 @@
         <Input
           v-model="fullName"
           type="text"
-          label="Nome Completo"
-          placeholder="Seu Nome"
+          :label="t('auth.register.fullName')"
+          :placeholder="t('auth.register.fullNamePlaceholder')"
           required
         />
 
         <Input
           v-model="username"
           type="text"
-          label="Username"
-          placeholder="novo_usuario"
+          :label="t('auth.register.username')"
+          :placeholder="t('auth.register.usernamePlaceholder')"
           required
         />
 
         <Input
           v-model="password"
           type="password"
-          label="Senha"
+          :label="t('auth.register.password')"
           placeholder="••••••••"
           required
         />
@@ -50,15 +55,15 @@
         <Input
           v-model="confirmPassword"
           type="password"
-          label="Confirmar Senha"
+          :label="t('auth.register.confirmPassword')"
           placeholder="••••••••"
           required
-          :error="password !== confirmPassword ? 'As senhas não coincidem' : ''"
+          :error="password !== confirmPassword ? t('auth.register.passwordMismatch') : ''"
         />
 
         <label class="flex items-center gap-2 text-sm text-gray-700">
           <input v-model="isAdminUser" type="checkbox" class="rounded border-gray-300" />
-          Criar usuário como administrador
+          {{ t("auth.register.adminCheckbox") }}
         </label>
 
         <Button
@@ -67,13 +72,13 @@
           :disabled="password !== confirmPassword"
           class="w-full"
         >
-          Criar usuário
+          {{ t("auth.register.submit") }}
         </Button>
       </FormGroup>
 
       <div class="mt-6 text-center">
         <router-link to="/dashboard" class="text-blue-600 hover:underline text-sm">
-          Voltar para o dashboard
+          {{ t("auth.register.backToDashboard") }}
         </router-link>
       </div>
     </div>
@@ -82,13 +87,16 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import FormGroup from "@/shared/components/FormGroup.vue";
 import Input from "@/shared/components/Input.vue";
 import Button from "@/shared/components/Button.vue";
 import Alert from "@/shared/components/Alert.vue";
+import LanguageSwitcher from "@/shared/components/LanguageSwitcher.vue";
 
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 const fullName = ref("");
 const username = ref("");
@@ -101,7 +109,7 @@ const successMessage = ref("");
 
 async function handleRegister() {
   if (password.value !== confirmPassword.value) {
-    error.value = "As senhas não coincidem";
+    error.value = t("auth.register.passwordMismatch");
     return;
   }
 
@@ -110,7 +118,7 @@ async function handleRegister() {
   successMessage.value = "";
 
   if (!authStore.isAdmin) {
-    error.value = "Apenas administradores podem criar novos usuários.";
+    error.value = t("auth.register.adminOnlyError");
     loading.value = false;
     return;
   }
@@ -122,14 +130,15 @@ async function handleRegister() {
       fullName.value,
       isAdminUser.value,
     );
-    successMessage.value = "Usuário criado com sucesso.";
+    successMessage.value = t("auth.register.successMessage");
     fullName.value = "";
     username.value = "";
     password.value = "";
     confirmPassword.value = "";
     isAdminUser.value = false;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : "Erro ao criar usuário";
+    error.value =
+      err instanceof Error ? err.message : t("auth.register.errorFallback");
   } finally {
     loading.value = false;
   }
