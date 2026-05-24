@@ -1,11 +1,17 @@
 export default {
   common: {
-    appName: "Hotel Mindu",
+    appName: "Notes",
     loading: "Carregando...",
     cancel: "Cancelar",
     close: "Fechar",
     confirm: "Confirmar",
     save: "Salvar",
+    previous: "Anterior",
+    next: "Próxima",
+    zoomIn: "Aumentar zoom",
+    zoomOut: "Diminuir zoom",
+    resetZoom: "Redefinir zoom",
+    imagePosition: "Imagem {current} de {total}",
     userFallback: "Usuário",
     requestFailed: "Falha na requisição",
   },
@@ -58,7 +64,7 @@ export default {
     },
   },
   home: {
-    title: "Hotel Mindu",
+    title: "Notes",
     subtitle: "Sistema de Gestão de Atividades e Tarefas",
     loginCta: "Entrar",
   },
@@ -131,6 +137,10 @@ export default {
       collaborator: "Colaborador",
     },
     toggleStatus: "Alterar Status",
+    cantDisableActiveWorkspace:
+      "Não é possível desativar o hotel do workspace ativo",
+    cantArchiveActiveWorkspace:
+      "Não é possível arquivar o hotel do workspace ativo",
     archiveWarningTitle: "Atenção: Ação Irreversível",
     archiveWarningMessage:
       "Ao arquivar este hotel, ele não poderá mais ser selecionado pelos usuários e seu status não poderá ser alterado. Esta ação é permanente.",
@@ -180,6 +190,8 @@ export default {
     imageUploadLabel: "Imagens (até 5)",
     imageUploadHint: "Formatos de imagem suportados. Máximo de 5 arquivos.",
     imagePreviewAlt: "Pré-visualização do quarto",
+    noImages: "Sem imagens",
+    imageCount: "{count} imagem(ns)",
     maxImagesError: "Você pode selecionar no máximo 5 imagens.",
     invalidImageError: "Selecione apenas arquivos de imagem.",
     modalAddTitle: "Cadastrar quarto",
@@ -196,8 +208,14 @@ export default {
       roomId: "ID do quarto",
       type: "Tipo",
       description: "Descrição",
+      images: "Imagens",
       status: "Status",
       actions: "Ações",
+    },
+    actions: {
+      enable: "Ativar",
+      disable: "Desativar",
+      viewImages: "Visualizar",
     },
     typeValues: {
       CONFORT: "Confort",

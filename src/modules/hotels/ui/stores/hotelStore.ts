@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { hotelService } from "@/modules/hotels/data/services/hotelService";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
 import type { Hotel, OwnershipTransfer } from "@/core/utils/types";
 import { i18n } from "@/core/i18n";
 
@@ -96,6 +97,10 @@ export const useHotelStore = defineStore("hotel", () => {
       const index = hotels.value.findIndex((h) => h.id === id);
       if (index !== -1 && data) {
         hotels.value[index] = data[0];
+        const workspaceStore = useWorkspaceStore();
+        if (workspaceStore.activeHotel?.id === id) {
+          workspaceStore.setActiveHotel(data[0]);
+        }
       }
       return data;
     } catch (err) {

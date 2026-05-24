@@ -27,93 +27,154 @@
       />
 
       <!-- Shimmer skeleton while loading -->
-      <div v-if="loading" class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex gap-6">
-          <Shimmer v-for="i in 6" :key="i" height="0.75rem" :width="i === 1 ? '15%' : i === 2 ? '12%' : i === 3 ? '8%' : i === 4 ? '10%' : i === 5 ? '12%' : '6%'" />
+      <div v-if="loading">
+        <!-- Mobile shimmer -->
+        <div class="md:hidden space-y-3">
+          <div v-for="row in 5" :key="row" class="bg-white rounded-lg shadow px-4 py-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <Shimmer height="0.9rem" width="45%" />
+              <Shimmer height="1.5rem" width="4rem" rounded="full" />
+            </div>
+            <Shimmer height="0.75rem" width="30%" />
+            <div class="flex gap-2">
+              <Shimmer height="1.4rem" width="3.5rem" rounded="full" />
+              <Shimmer height="1.4rem" width="5rem" rounded="full" />
+            </div>
+          </div>
         </div>
-        <div class="divide-y divide-gray-100">
-          <div v-for="row in 6" :key="row" class="px-6 py-4 flex gap-6 items-center">
-            <Shimmer height="0.875rem" width="18%" />
-            <Shimmer height="0.875rem" width="13%" />
-            <Shimmer height="1.5rem" width="4rem" rounded="full" />
-            <Shimmer height="0.875rem" width="6rem" />
-            <Shimmer height="0.875rem" width="10%" />
-            <Shimmer height="0.875rem" width="5rem" />
+        <!-- Desktop shimmer -->
+        <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+          <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex gap-6">
+            <Shimmer v-for="i in 6" :key="i" height="0.75rem" :width="i === 1 ? '15%' : i === 2 ? '12%' : i === 3 ? '8%' : i === 4 ? '10%' : i === 5 ? '12%' : '6%'" />
+          </div>
+          <div class="divide-y divide-gray-100">
+            <div v-for="row in 6" :key="row" class="px-6 py-4 flex gap-6 items-center">
+              <Shimmer height="0.875rem" width="18%" />
+              <Shimmer height="0.875rem" width="13%" />
+              <Shimmer height="1.5rem" width="4rem" rounded="full" />
+              <Shimmer height="0.875rem" width="6rem" />
+              <Shimmer height="0.875rem" width="10%" />
+              <Shimmer height="0.875rem" width="5rem" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-else class="bg-white rounded-lg shadow overflow-hidden">
-        <table v-if="users.length > 0" class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.name") }}
-              </th>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.username") }}
-              </th>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.role") }}
-              </th>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.status") }}
-              </th>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.hotels") }}
-              </th>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.createdAt") }}
-              </th>
-              <th class="text-left px-6 py-3 font-medium text-gray-600">
-                {{ t("users.table.actions") }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <tr
-              v-for="user in users"
-              :key="user.id"
-              class="hover:bg-gray-50 transition"
-            >
-              <td class="px-6 py-4 font-medium text-gray-900">
-                {{ user.full_name }}
-              </td>
-              <td class="px-6 py-4 text-gray-600">@{{ user.username }}</td>
-              <td class="px-6 py-4">
-                <Badge :variant="user.is_admin ? 'success' : 'primary'">
-                  {{ user.is_admin ? t("users.role.admin") : t("users.role.user") }}
-                </Badge>
-              </td>
-              <td class="px-6 py-4">
-                <Badge :variant="statusBadgeVariant(user.status)">
-                  {{ t(`users.statusValues.${user.status}`) }}
-                </Badge>
-              </td>
-              <td class="px-6 py-4 text-gray-600 text-sm">
-                {{ (user.hotel_memberships || []).length }}
-                {{ t("users.hotelCount") }}
-              </td>
-              <td class="px-6 py-4 text-gray-500">
-                {{ formatDate(user.created_at) }}
-              </td>
-              <td class="px-6 py-4 text-right">
-                <button
-                  @click.stop="toggleMenu($event, user)"
-                  class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-                  :aria-label="t('users.table.actions')"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else>
+        <!-- Mobile card list -->
+        <div v-if="users.length > 0" class="md:hidden space-y-3">
+          <div
+            v-for="user in users"
+            :key="user.id"
+            class="bg-white rounded-lg shadow px-4 py-4"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-900 truncate">{{ user.full_name }}</p>
+                <p class="text-sm text-gray-500 mt-0.5">@{{ user.username }}</p>
+              </div>
+              <button
+                @click.stop="toggleMenu($event, user)"
+                class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors shrink-0"
+                :aria-label="t('users.table.actions')"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <Badge :variant="user.is_admin ? 'success' : 'primary'">
+                {{ user.is_admin ? t("users.role.admin") : t("users.role.user") }}
+              </Badge>
+              <Badge :variant="statusBadgeVariant(user.status)">
+                {{ t(`users.statusValues.${user.status}`) }}
+              </Badge>
+            </div>
+            <div class="flex gap-4 mt-3 text-xs text-gray-500">
+              <span>{{ (user.hotel_memberships || []).length }} {{ t("users.hotelCount") }}</span>
+              <span>{{ formatDate(user.created_at) }}</span>
+            </div>
+          </div>
+        </div>
 
-        <div v-else class="p-12 text-center">
-          <p class="text-gray-600 text-lg">{{ t("users.empty") }}</p>
+        <!-- Desktop table -->
+        <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+          <table v-if="users.length > 0" class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.name") }}
+                </th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.username") }}
+                </th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.role") }}
+                </th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.status") }}
+                </th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.hotels") }}
+                </th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.createdAt") }}
+                </th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">
+                  {{ t("users.table.actions") }}
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr
+                v-for="user in users"
+                :key="user.id"
+                class="hover:bg-gray-50 transition"
+              >
+                <td class="px-6 py-4 font-medium text-gray-900">
+                  {{ user.full_name }}
+                </td>
+                <td class="px-6 py-4 text-gray-600">@{{ user.username }}</td>
+                <td class="px-6 py-4">
+                  <Badge :variant="user.is_admin ? 'success' : 'primary'">
+                    {{ user.is_admin ? t("users.role.admin") : t("users.role.user") }}
+                  </Badge>
+                </td>
+                <td class="px-6 py-4">
+                  <Badge :variant="statusBadgeVariant(user.status)">
+                    {{ t(`users.statusValues.${user.status}`) }}
+                  </Badge>
+                </td>
+                <td class="px-6 py-4 text-gray-600 text-sm">
+                  {{ (user.hotel_memberships || []).length }}
+                  {{ t("users.hotelCount") }}
+                </td>
+                <td class="px-6 py-4 text-gray-500">
+                  {{ formatDate(user.created_at) }}
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <button
+                    @click.stop="toggleMenu($event, user)"
+                    class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                    :aria-label="t('users.table.actions')"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div v-else class="p-12 text-center">
+            <p class="text-gray-600 text-lg">{{ t("users.empty") }}</p>
+          </div>
+        </div>
+
+        <div v-if="users.length === 0" class="md:hidden bg-white rounded-lg shadow p-8 text-center">
+          <p class="text-gray-600">{{ t("users.empty") }}</p>
         </div>
       </div>
     </div>
@@ -440,6 +501,14 @@
           </span>
         </label>
       </div>
+      <template #footer>
+        <Button variant="ghost" :disabled="savingMembership" @click="isMembershipModalOpen = false">
+          {{ t("common.cancel") }}
+        </Button>
+        <Button :loading="savingMembership" :disabled="savingMembership" @click="saveHotelMemberships">
+          {{ t("common.confirm") }}
+        </Button>
+      </template>
     </Modal>
   </AppLayout>
 </template>
@@ -480,6 +549,7 @@ const membershipForm = ref<string[]>([]);
 const membershipError = ref("");
 const membershipSuccess = ref("");
 const transferredHotels = ref<any[]>([]);
+const savingMembership = ref(false);
 
 // Edit user modal
 const isEditModalOpen = ref(false);
@@ -630,6 +700,7 @@ async function saveHotelMemberships() {
   membershipError.value = "";
   membershipSuccess.value = "";
   transferredHotels.value = [];
+  savingMembership.value = true;
   try {
     const token = authStore.token ?? "";
     const result = await authService.updateUserHotels(
@@ -658,6 +729,8 @@ async function saveHotelMemberships() {
   } catch (err) {
     membershipError.value =
       err instanceof Error ? err.message : t("users.errors.updateHotels");
+  } finally {
+    savingMembership.value = false;
   }
 }
 

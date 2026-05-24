@@ -1,4 +1,4 @@
-# Hotel Mindu Frontend
+# Notes Frontend
 
 Aplicacao web do sistema Hotel Mindu.
 

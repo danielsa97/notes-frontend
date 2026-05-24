@@ -10,3 +10,4 @@ export { default as Shimmer } from "./Shimmer.vue";
 export { default as FormGroup } from "./FormGroup.vue";
 export { default as Badge } from "./Badge.vue";
 export { default as ImagePicker } from "./ImagePicker.vue";
+export { default as ImagePreviewLightbox } from "./ImagePreviewLightbox.vue";

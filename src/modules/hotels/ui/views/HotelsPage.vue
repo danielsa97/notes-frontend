@@ -146,19 +146,23 @@
                     </button>
                     <button
                       @click="toggleStatus(hotel)"
-                      :disabled="hotel.status === 'ARCHIVED'"
-                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
-                      :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'"
+                      :disabled="hotel.status === 'ARCHIVED' || isActiveWorkspace(hotel.id)"
+                      :title="isActiveWorkspace(hotel.id) ? t('hotels.cantDisableActiveWorkspace') : ''"
+                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm relative group"
+                      :class="hotel.status === 'ARCHIVED' || isActiveWorkspace(hotel.id) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'"
                     >
                       {{ t("hotels.toggleStatus") }}
+                      <span v-if="isActiveWorkspace(hotel.id)" class="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap hidden group-hover:block z-20">{{ t('hotels.cantDisableActiveWorkspace') }}</span>
                     </button>
                     <button
                       @click="requestArchive(hotel)"
-                      :disabled="hotel.status === 'ARCHIVED'"
-                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
-                      :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-orange-600'"
+                      :disabled="hotel.status === 'ARCHIVED' || isActiveWorkspace(hotel.id)"
+                      :title="isActiveWorkspace(hotel.id) ? t('hotels.cantArchiveActiveWorkspace') : ''"
+                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm relative group"
+                      :class="hotel.status === 'ARCHIVED' || isActiveWorkspace(hotel.id) ? 'text-gray-300 cursor-not-allowed' : 'text-orange-600'"
                     >
                       {{ t("hotels.archive") }}
+                      <span v-if="isActiveWorkspace(hotel.id)" class="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap hidden group-hover:block z-20">{{ t('hotels.cantArchiveActiveWorkspace') }}</span>
                     </button>
                     <hr v-if="hotel.my_role === 'owner'" class="my-1 border-gray-100" />
                   </template>
@@ -470,6 +474,7 @@ import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
 import { hotelService } from "@/modules/hotels/data/services/hotelService";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Card from "@/shared/components/Card.vue";
@@ -487,6 +492,7 @@ import type { Hotel, UserSearchResult } from "@/core/utils/types";
 
 const hotelStore = useHotelStore();
 const authStore = useAuthStore();
+const workspaceStore = useWorkspaceStore();
 const { t, locale } = useI18n();
 
 const isModalOpen = ref(false);
@@ -643,6 +649,10 @@ async function confirmArchive() {
 
 function openMenu(hotelId: string) {
   activeMenu.value = activeMenu.value === hotelId ? null : hotelId;
+}
+
+function isActiveWorkspace(hotelId: string): boolean {
+  return workspaceStore.activeHotel?.id === hotelId;
 }
 
 function requestTransfer(hotel: Hotel) {

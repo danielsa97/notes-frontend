@@ -8,7 +8,7 @@
         <img
           src="@/assets/logo.png"
           :alt="t('common.appName')"
-          class="h-14 w-auto mx-auto mb-4"
+          class="h-14 w-auto mx-auto mb-4 rounded"
         />
         <h1 class="text-2xl font-bold text-gray-900">
           {{ t("workspace.selectTitle") }}

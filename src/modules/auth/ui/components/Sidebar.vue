@@ -1,6 +1,13 @@
 <template>
   <aside :class="asideClasses">
-    <nav class="flex-1 px-4 py-8 space-y-2">
+    <div class="flex items-center justify-center px-4 pt-6 pb-2">
+      <img
+        src="@/assets/logo.png"
+        :alt="t('common.appName')"
+        class="h-20 w-auto rounded-xl"
+      />
+    </div>
+    <nav class="flex-1 px-4 py-4 space-y-2">
       <router-link
         v-for="item in navItems"
         :key="item.path"

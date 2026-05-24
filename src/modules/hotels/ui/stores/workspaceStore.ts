@@ -18,6 +18,11 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     setStoredHotel(hotel);
   }
 
+  function switchWorkspace(hotel: Hotel) {
+    setActiveHotel(hotel);
+    window.location.reload();
+  }
+
   function clearActiveHotel() {
     activeHotel.value = null;
     setStoredHotel(null);
@@ -35,6 +40,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   return {
     activeHotel,
     setActiveHotel,
+    switchWorkspace,
     clearActiveHotel,
     validateAgainstHotels,
   };

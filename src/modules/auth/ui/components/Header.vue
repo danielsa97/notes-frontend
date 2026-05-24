@@ -2,7 +2,7 @@
   <header class="bg-white shadow-sm sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
 
-      <!-- Logo + workspace switcher -->
+      <!-- Workspace switcher -->
       <div class="flex items-center gap-3">
         <button
           v-if="showMobileMenuButton"
@@ -14,15 +14,9 @@
           <span class="sr-only">{{ t("navigation.openMenu") }}</span>
         </button>
 
-        <img
-          src="@/assets/logo.png"
-          :alt="t('common.appName')"
-          class="h-9 w-auto rounded-xl"
-        />
-
         <button
           v-if="workspaceStore.activeHotel"
-          @click="isSwitcherOpen = true"
+          @click="openSwitcher"
           class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition group"
           :title="t('workspace.switchTitle')"
         >
@@ -72,7 +66,7 @@
           </div>
 
           <ul class="py-2 max-h-72 overflow-y-auto">
-            <li v-for="hotel in hotelStore.hotels" :key="hotel.id">
+            <li v-for="hotel in hotelStore.hotels.filter(h => h.status !== 'ARCHIVED')" :key="hotel.id">
               <button
                 @click="switchHotel(hotel)"
                 class="w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition text-left"
@@ -87,12 +81,15 @@
                     :class="isActive(hotel) ? 'text-blue-600' : 'text-gray-500'"
                   />
                 </div>
-                <span
-                  class="flex-1 text-sm font-medium truncate"
-                  :class="isActive(hotel) ? 'text-blue-700' : 'text-gray-800'"
-                >
-                  {{ hotel.name }}
-                </span>
+                <div class="flex-1 min-w-0">
+                  <span
+                    class="block text-sm font-medium truncate"
+                    :class="isActive(hotel) ? 'text-blue-700' : 'text-gray-800'"
+                  >
+                    {{ hotel.name }}
+                  </span>
+                  <span v-if="hotel.status === 'DISABLED'" class="text-xs text-amber-500">{{ t('hotels.statusValues.DISABLED') }}</span>
+                </div>
                 <Check v-if="isActive(hotel)" class="w-4 h-4 text-blue-600 shrink-0" />
               </button>
             </li>
@@ -104,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
@@ -134,19 +131,45 @@ const { t } = useI18n();
 
 const isSwitcherOpen = ref(false);
 
+async function ensureHotelsLoaded() {
+  if (!authStore.token || hotelStore.hotels.length > 0) {
+    return;
+  }
+
+  await hotelStore.fetchHotels();
+  workspaceStore.validateAgainstHotels(hotelStore.hotels);
+
+  if (workspaceStore.activeHotel) {
+    const refreshedHotel = hotelStore.hotels.find(
+      (hotel) => hotel.id === workspaceStore.activeHotel?.id,
+    );
+    if (refreshedHotel) {
+      workspaceStore.setActiveHotel(refreshedHotel);
+    }
+  }
+}
+
+async function openSwitcher() {
+  await ensureHotelsLoaded();
+  isSwitcherOpen.value = true;
+}
+
 function isActive(hotel: Hotel) {
   return workspaceStore.activeHotel?.id === hotel.id;
 }
 
 function switchHotel(hotel: Hotel) {
-  workspaceStore.setActiveHotel(hotel);
-  isSwitcherOpen.value = false;
+  workspaceStore.switchWorkspace(hotel);
 }
 
 async function handleLogout() {
   await authStore.logout();
   router.push("/login");
 }
+
+onMounted(() => {
+  void ensureHotelsLoaded();
+});
 </script>
 
 <style scoped>
