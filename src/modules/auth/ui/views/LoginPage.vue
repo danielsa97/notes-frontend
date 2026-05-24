@@ -69,7 +69,7 @@ async function handleLogin() {
   error.value = "";
   try {
     await authStore.login(username.value, password.value);
-    router.push("/dashboard");
+    router.push("/hotel-select");
   } catch (err) {
     error.value =
       err instanceof Error ? err.message : t("auth.login.errorFallback");

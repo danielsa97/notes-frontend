@@ -261,7 +261,6 @@ async function saveHotel() {
           description: form.value.description,
           status: form.value.status,
           archived: false,
-          owner_id: authStore.user?.id || "",
         },
         selectedImages.value,
       );

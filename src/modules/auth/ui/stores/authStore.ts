@@ -96,9 +96,8 @@ export const useAuthStore = defineStore("auth", () => {
       setStoredUser(null);
       setStoredToken(null);
       // Clear active workspace
-      const { useWorkspaceStore } = await import(
-        "@/modules/hotels/ui/stores/workspaceStore"
-      );
+      const { useWorkspaceStore } =
+        await import("@/modules/hotels/ui/stores/workspaceStore");
       useWorkspaceStore().clearActiveHotel();
     } catch (err) {
       error.value =

@@ -6,7 +6,7 @@
           <h1 class="text-3xl font-bold text-gray-900">{{ t("users.title") }}</h1>
           <p class="text-gray-600">{{ t("users.subtitle") }}</p>
         </div>
-        <Button @click="openModal">{{ t("users.add") }}</Button>
+        <Button @click="openCreateModal">{{ t("users.add") }}</Button>
       </div>
 
       <Alert
@@ -32,8 +32,12 @@
                 {{ t("users.table.role") }}
               </th>
               <th class="text-left px-6 py-3 font-medium text-gray-600">
+                {{ t("users.table.hotels") }}
+              </th>
+              <th class="text-left px-6 py-3 font-medium text-gray-600">
                 {{ t("users.table.createdAt") }}
               </th>
+              <th class="px-6 py-3"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -51,8 +55,20 @@
                   {{ user.is_admin ? t("users.role.admin") : t("users.role.user") }}
                 </Badge>
               </td>
+              <td class="px-6 py-4 text-gray-600 text-sm">
+                {{ (user.hotel_memberships || []).length }}
+                {{ t("users.hotelCount") }}
+              </td>
               <td class="px-6 py-4 text-gray-500">
                 {{ formatDate(user.created_at) }}
+              </td>
+              <td class="px-6 py-4">
+                <button
+                  @click="openMembershipModal(user)"
+                  class="text-sm text-blue-600 hover:underline whitespace-nowrap"
+                >
+                  {{ t("users.manageHotels") }}
+                </button>
               </td>
             </tr>
           </tbody>
@@ -65,9 +81,9 @@
     </div>
 
     <Modal
-      :isOpen="isModalOpen"
+      :isOpen="isCreateModalOpen"
       :title="t('users.modalTitle')"
-      @close="closeModal"
+      @close="closeCreateModal"
       @confirm="handleCreate"
     >
       <Alert
@@ -120,7 +136,64 @@
           <input v-model="form.isAdmin" type="checkbox" class="rounded border-gray-300" />
           {{ t("auth.register.adminCheckbox") }}
         </label>
+
+        <!-- Hotel association -->
+        <div v-if="hotelStore.hotels.length > 0">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ t("users.associateHotels") }}
+          </label>
+          <div class="space-y-1 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+            <label
+              v-for="hotel in hotelStore.hotels"
+              :key="hotel.id"
+              class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer p-1 rounded hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                :value="hotel.id"
+                v-model="form.selectedHotelIds"
+                class="rounded border-gray-300"
+              />
+              {{ hotel.name }}
+            </label>
+          </div>
+        </div>
       </FormGroup>
+    </Modal>
+
+    <!-- Hotel membership management modal -->
+    <Modal
+      :isOpen="isMembershipModalOpen"
+      :title="t('users.manageHotelsTitle', { name: managingUser?.full_name ?? '' })"
+      @close="isMembershipModalOpen = false"
+      @confirm="saveHotelMemberships"
+    >
+      <Alert
+        v-if="membershipError"
+        type="error"
+        :title="t('users.errorTitle')"
+        :message="membershipError"
+      />
+      <div class="space-y-1 max-h-60 overflow-y-auto">
+        <label
+          v-for="hotel in hotelStore.hotels"
+          :key="hotel.id"
+          class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer p-2 rounded hover:bg-gray-50"
+          :class="{ 'opacity-60': isOwnerOf(hotel.id) }"
+        >
+          <input
+            type="checkbox"
+            :value="hotel.id"
+            v-model="membershipForm"
+            class="rounded border-gray-300"
+            :disabled="isOwnerOf(hotel.id)"
+          />
+          <span class="flex-1">{{ hotel.name }}</span>
+          <span v-if="isOwnerOf(hotel.id)" class="text-xs text-gray-400 ml-auto">
+            {{ t("workspace.owner") }}
+          </span>
+        </label>
+      </div>
     </Modal>
   </AppLayout>
 </template>
@@ -129,6 +202,7 @@
 import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import { authService } from "@/modules/auth/data/services/authService";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Alert from "@/shared/components/Alert.vue";
@@ -141,15 +215,22 @@ import Modal from "@/shared/components/Modal.vue";
 import type { User } from "@/core/utils/types";
 
 const authStore = useAuthStore();
+const hotelStore = useHotelStore();
 const { t, locale } = useI18n();
 
 const users = ref<User[]>([]);
 const loading = ref(false);
 const fetchError = ref("");
-const isModalOpen = ref(false);
+const isCreateModalOpen = ref(false);
 const createError = ref("");
 const createSuccess = ref("");
 const saving = ref(false);
+
+// Hotel membership modal
+const isMembershipModalOpen = ref(false);
+const managingUser = ref<User | null>(null);
+const membershipForm = ref<string[]>([]);
+const membershipError = ref("");
 
 const form = ref({
   fullName: "",
@@ -157,22 +238,63 @@ const form = ref({
   password: "",
   confirmPassword: "",
   isAdmin: false,
+  selectedHotelIds: [] as string[],
 });
 
 function resetForm() {
-  form.value = { fullName: "", username: "", password: "", confirmPassword: "", isAdmin: false };
+  form.value = {
+    fullName: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+    isAdmin: false,
+    selectedHotelIds: [],
+  };
   createError.value = "";
   createSuccess.value = "";
 }
 
-function openModal() {
+function openCreateModal() {
   resetForm();
-  isModalOpen.value = true;
+  isCreateModalOpen.value = true;
 }
 
-function closeModal() {
-  isModalOpen.value = false;
+function closeCreateModal() {
+  isCreateModalOpen.value = false;
   resetForm();
+}
+
+function isOwnerOf(hotelId: string): boolean {
+  return (
+    managingUser.value?.hotel_memberships?.some(
+      (m) => m.hotel_id === hotelId && m.role === "owner",
+    ) ?? false
+  );
+}
+
+function openMembershipModal(user: User) {
+  managingUser.value = user;
+  membershipError.value = "";
+  membershipForm.value = (user.hotel_memberships ?? []).map((m) => m.hotel_id);
+  isMembershipModalOpen.value = true;
+}
+
+async function saveHotelMemberships() {
+  if (!managingUser.value) return;
+  membershipError.value = "";
+  try {
+    const token = authStore.token ?? "";
+    await authService.updateUserHotels(
+      managingUser.value.id,
+      membershipForm.value,
+      token,
+    );
+    isMembershipModalOpen.value = false;
+    await loadUsers();
+  } catch (err) {
+    membershipError.value =
+      err instanceof Error ? err.message : t("users.errors.updateHotels");
+  }
 }
 
 async function loadUsers() {
@@ -200,13 +322,22 @@ async function handleCreate() {
   createError.value = "";
   createSuccess.value = "";
   try {
-    const token = authStore.token ?? "";
-    await authStore.register(
+    const result = await authStore.register(
       form.value.username,
       form.value.password,
       form.value.fullName,
       form.value.isAdmin,
     );
+
+    if (result?.user?.id && form.value.selectedHotelIds.length > 0) {
+      const token = authStore.token ?? "";
+      await authService.updateUserHotels(
+        result.user.id,
+        form.value.selectedHotelIds,
+        token,
+      );
+    }
+
     createSuccess.value = t("auth.register.successMessage");
     await loadUsers();
     resetForm();
@@ -221,5 +352,7 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString(locale.value);
 }
 
-onMounted(loadUsers);
+onMounted(async () => {
+  await Promise.all([loadUsers(), hotelStore.fetchHotels()]);
+});
 </script>

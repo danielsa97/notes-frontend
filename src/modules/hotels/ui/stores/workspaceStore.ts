@@ -32,5 +32,10 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     }
   }
 
-  return { activeHotel, setActiveHotel, clearActiveHotel, validateAgainstHotels };
+  return {
+    activeHotel,
+    setActiveHotel,
+    clearActiveHotel,
+    validateAgainstHotels,
+  };
 });
