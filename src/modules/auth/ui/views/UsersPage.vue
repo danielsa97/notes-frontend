@@ -339,7 +339,18 @@
         :message="deleteError"
       />
       <p class="text-sm text-gray-700 mb-3">{{ t("users.deleteConfirmMessage") }}</p>
-      <p class="text-sm text-gray-900 font-medium">{{ deletingUser?.full_name }}</p>
+      <p class="text-sm text-gray-900 font-medium mb-4">{{ deletingUser?.full_name }}</p>
+      
+      <!-- Show hotels that will be transferred -->
+      <div v-if="deletingUserOwnedHotels.length > 0" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p class="text-sm font-medium text-blue-900 mb-2">{{ t("users.hotelTransferWarning") }}</p>
+        <ul class="space-y-1">
+          <li v-for="hotel in deletingUserOwnedHotels" :key="hotel.id" class="text-sm text-blue-800">
+            • {{ hotel.name }}
+          </li>
+        </ul>
+      </div>
+      
       <template #footer>
         <Button variant="ghost" :disabled="deleting" @click="closeDeleteModal">
           {{ t("common.cancel") }}
@@ -467,6 +478,8 @@ const isMembershipModalOpen = ref(false);
 const managingUser = ref<User | null>(null);
 const membershipForm = ref<string[]>([]);
 const membershipError = ref("");
+const membershipSuccess = ref("");
+const transferredHotels = ref<any[]>([]);
 
 // Edit user modal
 const isEditModalOpen = ref(false);
@@ -495,6 +508,7 @@ const isDeleteModalOpen = ref(false);
 const deleting = ref(false);
 const deleteError = ref("");
 const deletingUser = ref<User | null>(null);
+const deletingUserOwnedHotels = ref<any[]>([]);
 
 // Actions dropdown menu
 const openMenuId = ref<string | null>(null);
@@ -614,15 +628,33 @@ function openMembershipModal(user: User) {
 async function saveHotelMemberships() {
   if (!managingUser.value) return;
   membershipError.value = "";
+  membershipSuccess.value = "";
+  transferredHotels.value = [];
   try {
     const token = authStore.token ?? "";
-    await authService.updateUserHotels(
+    const result = await authService.updateUserHotels(
       managingUser.value.id,
       membershipForm.value,
       token,
     );
+    
+    // Check if any hotels were transferred
+    if (result.transferredHotels && result.transferredHotels.length > 0) {
+      transferredHotels.value = result.transferredHotels;
+      const hotelNames = result.transferredHotels
+        .map((h: any) => h.name)
+        .join(", ");
+      membershipSuccess.value = t(
+        "users.hotelTransferSuccess",
+        { hotels: hotelNames },
+      );
+    }
+    
     isMembershipModalOpen.value = false;
     await loadUsers();
+    if (membershipSuccess.value) {
+      actionSuccess.value = membershipSuccess.value;
+    }
   } catch (err) {
     membershipError.value =
       err instanceof Error ? err.message : t("users.errors.updateHotels");
@@ -739,6 +771,15 @@ async function saveUserPassword() {
 function openDeleteModal(user: User) {
   deleteError.value = "";
   deletingUser.value = user;
+  
+  // Find hotels where this user is the owner
+  deletingUserOwnedHotels.value = hotelStore.hotels.filter(
+    (hotel) =>
+      user.hotel_memberships?.some(
+        (m) => m.hotel_id === hotel.id && m.role === "owner",
+      ) ?? false,
+  );
+  
   isDeleteModalOpen.value = true;
 }
 
@@ -746,6 +787,7 @@ function closeDeleteModal() {
   isDeleteModalOpen.value = false;
   deleteError.value = "";
   deletingUser.value = null;
+  deletingUserOwnedHotels.value = [];
 }
 
 async function confirmSoftDelete() {
@@ -756,9 +798,22 @@ async function confirmSoftDelete() {
 
   try {
     const token = authStore.token ?? "";
-    await authService.softDeleteUser(deletingUser.value.id, token);
+    const result = await authService.softDeleteUser(deletingUser.value.id, token);
     closeDeleteModal();
-    actionSuccess.value = t("users.deleteSuccess");
+    
+    // Check if any hotels were transferred
+    if (result.transferredHotels && result.transferredHotels.length > 0) {
+      const hotelNames = result.transferredHotels
+        .map((h: any) => h.name)
+        .join(", ");
+      actionSuccess.value = t(
+        "users.hotelTransferSuccess",
+        { hotels: hotelNames },
+      );
+    } else {
+      actionSuccess.value = t("users.deleteSuccess");
+    }
+    
     await loadUsers();
   } catch (err) {
     deleteError.value = err instanceof Error ? err.message : t("users.errors.deleteUser");

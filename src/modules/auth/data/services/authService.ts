@@ -72,11 +72,14 @@ export const authService = {
   },
 
   async updateUserHotels(userId: string, hotelIds: string[], token: string) {
-    return apiRequest<{ ok: boolean }>(`/auth/users/${userId}/hotels`, {
-      method: "PUT",
-      body: { hotelIds },
-      token,
-    });
+    return apiRequest<{ ok: boolean; transferredHotels?: Hotel[] }>(
+      `/auth/users/${userId}/hotels`,
+      {
+        method: "PUT",
+        body: { hotelIds },
+        token,
+      },
+    );
   },
 
   async updateUser(userId: string, payload: UpdateUserPayload, token: string) {
@@ -96,10 +99,13 @@ export const authService = {
   },
 
   async softDeleteUser(userId: string, token: string) {
-    return apiRequest<{ ok: boolean }>(`/auth/users/${userId}`, {
-      method: "DELETE",
-      token,
-    });
+    return apiRequest<{ ok: boolean; transferredHotels?: Hotel[] }>(
+      `/auth/users/${userId}`,
+      {
+        method: "DELETE",
+        token,
+      },
+    );
   },
 
   async toggleUserStatus(userId: string, token: string) {

@@ -39,20 +39,13 @@
                 <td class="px-6 py-4 font-medium text-gray-900">{{ transfer.hotel.name }}</td>
                 <td class="px-6 py-4 text-gray-600">{{ transfer.from_user.full_name }}</td>
                 <td class="px-6 py-4 text-amber-600 font-medium">{{ expiresIn(transfer.expires_at) }}</td>
-                <td class="px-6 py-4 text-right space-x-2">
+                <td class="px-6 py-4 text-right">
                   <button
-                    @click="handleRespondTransfer(transfer.id, 'accept', transfer.hotel.name)"
-                    :disabled="respondingTransferId === transfer.id"
-                    class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 transition"
+                    @click.stop="toggleTransferMenu($event, transfer)"
+                    class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                    :aria-label="t('users.table.actions')"
                   >
-                    {{ t("hotels.pendingTransfers.accept") }}
-                  </button>
-                  <button
-                    @click="handleRespondTransfer(transfer.id, 'reject', transfer.hotel.name)"
-                    :disabled="respondingTransferId === transfer.id"
-                    class="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-60 transition"
-                  >
-                    {{ t("hotels.pendingTransfers.reject") }}
+                    <MoreVertical class="h-5 w-5" />
                   </button>
                 </td>
               </tr>
@@ -120,11 +113,18 @@
                 <h3 class="text-lg font-bold text-gray-900">
                   {{ hotel.name }}
                 </h3>
-                <Badge
-                  :variant="hotel.status === 'ENABLED' ? 'success' : hotel.status === 'DISABLED' ? 'warning' : 'secondary'"
-                >
-                  {{ t(`hotels.statusValues.${hotel.status}`) }}
-                </Badge>
+                <div class="flex items-center gap-2 mt-2">
+                  <Badge
+                    :variant="hotel.status === 'ENABLED' ? 'success' : hotel.status === 'DISABLED' ? 'warning' : 'secondary'"
+                  >
+                    {{ t(`hotels.statusValues.${hotel.status}`) }}
+                  </Badge>
+                  <Badge
+                    :variant="hotel.my_role === 'owner' ? 'primary' : 'secondary'"
+                  >
+                    {{ t(`hotels.roles.${hotel.my_role}`) }}
+                  </Badge>
+                </div>
               </div>
               <div v-if="authStore.isAdmin || hotel.my_role === 'owner'" class="relative">
                 <button
@@ -437,6 +437,30 @@
           </template>
         </template>
       </Modal>
+
+      <!-- Actions dropdown for pending transfers (teleported to avoid overflow-hidden clipping) -->
+      <Teleport to="body">
+        <template v-if="menuTransfer">
+          <div class="fixed inset-0 z-40" @click="closeTransferMenu" />
+          <div
+            :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }"
+            class="fixed z-50 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm"
+          >
+            <button
+              @click="handleMenuAccept"
+              class="w-full text-left px-4 py-2.5 text-green-600 hover:bg-green-50 transition-colors"
+            >
+              {{ t("hotels.pendingTransfers.accept") }}
+            </button>
+            <button
+              @click="handleMenuReject"
+              class="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              {{ t("hotels.pendingTransfers.reject") }}
+            </button>
+          </div>
+        </template>
+      </Teleport>
     </div>
   </AppLayout>
 </template>
@@ -493,6 +517,11 @@ const cancelingTransfer = ref(false);
 const transferError = ref("");
 const transferSuccess = ref("");
 const respondingTransferId = ref<string | null>(null);
+
+// Transfer menu state (for pending transfers table)
+const openTransferMenuId = ref<string | null>(null);
+const menuTransfer = ref<any | null>(null);
+const menuPosition = ref({ top: 0, left: 0 });
 let transferSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 function resetSelectedImages() {
@@ -738,6 +767,47 @@ async function handleRespondTransfer(
     // handled in store
   } finally {
     respondingTransferId.value = null;
+  }
+}
+
+function toggleTransferMenu(event: MouseEvent, transfer: any) {
+  if (openTransferMenuId.value === transfer.id) {
+    closeTransferMenu();
+    return;
+  }
+  const btn = event.currentTarget as HTMLElement;
+  const rect = btn.getBoundingClientRect();
+  const menuWidth = 192; // w-48
+  const menuHeight = 100; // approximate height for 2 items
+
+  let top = rect.bottom + 4;
+  let left = rect.right - menuWidth;
+
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 4;
+
+  menuPosition.value = { top, left };
+  menuTransfer.value = transfer;
+  openTransferMenuId.value = transfer.id;
+}
+
+function closeTransferMenu() {
+  openTransferMenuId.value = null;
+  menuTransfer.value = null;
+}
+
+function handleMenuAccept() {
+  if (menuTransfer.value) {
+    handleRespondTransfer(menuTransfer.value.id, "accept", menuTransfer.value.hotel.name);
+    closeTransferMenu();
+  }
+}
+
+function handleMenuReject() {
+  if (menuTransfer.value) {
+    handleRespondTransfer(menuTransfer.value.id, "reject", menuTransfer.value.hotel.name);
+    closeTransferMenu();
   }
 }
 

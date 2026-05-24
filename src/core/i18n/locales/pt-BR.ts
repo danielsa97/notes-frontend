@@ -122,6 +122,10 @@ export default {
       DISABLED: "Inativo",
       ARCHIVED: "Arquivado",
     },
+    roles: {
+      owner: "Proprietário",
+      collaborator: "Colaborador",
+    },
     toggleStatus: "Alterar Status",
     archiveWarningTitle: "Atenção: Ação Irreversível",
     archiveWarningMessage:
@@ -220,6 +224,10 @@ export default {
     passwordSuccess: "Senha atualizada com sucesso.",
     statusToggleSuccess: "{name} foi {status} com sucesso.",
     deleteSuccess: "Usuário excluído com sucesso.",
+    hotelTransferSuccess:
+      "Propriedade dos hotéis foi transferida para você: {hotels}",
+    hotelTransferWarning:
+      "Ao excluir este usuário, a propriedade dos seguintes hotéis será transferida para você:",
     lastActiveAdminHint:
       "O último administrador ativo não pode perder permissão de admin.",
     associateHotels: "Associar a hotéis (colaborador)",
