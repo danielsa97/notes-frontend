@@ -45,12 +45,16 @@ export const useHotelStore = defineStore("hotel", () => {
   }
 
   async function createHotel(
-    hotel: Omit<Hotel, "id" | "created_at" | "updated_at">,
+    hotel: Omit<Hotel, "id" | "created_at" | "updated_at" | "image_urls">,
+    imageFiles: File[] = [],
   ) {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await hotelService.createHotel(hotel);
+      const { data, error: err } = await hotelService.createHotel(
+        hotel,
+        imageFiles,
+      );
       if (err) throw err;
       if (data) hotels.value.push(...data);
       return data;

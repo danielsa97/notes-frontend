@@ -14,6 +14,7 @@ export interface Hotel {
   name: string;
   description?: string;
   status: "ativo" | "inativo";
+  image_urls?: string[];
   archived: boolean;
   owner_id: string;
   created_at: string;

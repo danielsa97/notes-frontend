@@ -28,6 +28,13 @@
             :key="hotel.id"
             class="cursor-pointer hover:shadow-lg transition"
           >
+            <img
+              v-if="hotel.image_urls?.length"
+              :src="hotel.image_urls[0]"
+              :alt="`Imagem do hotel ${hotel.name}`"
+              class="w-full h-40 object-cover rounded-lg mb-4"
+            />
+
             <div class="flex items-start justify-between mb-4">
               <div class="flex-1">
                 <h3 class="text-lg font-bold text-gray-900">
@@ -119,6 +126,36 @@
               <option value="inativo">Inativo</option>
             </select>
           </div>
+
+          <div v-if="!editingHotel">
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Imagens (até 3)</label
+            >
+            <input
+              :key="imageInputKey"
+              type="file"
+              accept="image/*"
+              multiple
+              @change="handleImageSelection"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <p class="text-xs text-gray-500 mt-2">
+              Formatos de imagem suportados. Máximo de 3 arquivos.
+            </p>
+
+            <div
+              v-if="imagePreviews.length"
+              class="grid grid-cols-3 gap-2 mt-3"
+            >
+              <img
+                v-for="preview in imagePreviews"
+                :key="preview"
+                :src="preview"
+                alt="Pré-visualização"
+                class="h-20 w-full object-cover rounded-md border border-gray-200"
+              />
+            </div>
+          </div>
         </FormGroup>
       </Modal>
     </div>
@@ -146,15 +183,48 @@ const authStore = useAuthStore();
 const isModalOpen = ref(false);
 const activeMenu = ref<string | null>(null);
 const editingHotel = ref<Hotel | null>(null);
+const selectedImages = ref<File[]>([]);
+const imagePreviews = ref<string[]>([]);
+const imageInputKey = ref(0);
 const form = ref({
   name: "",
   description: "",
   status: "ativo" as const,
 });
 
+function resetSelectedImages() {
+  imagePreviews.value.forEach((url) => URL.revokeObjectURL(url));
+  selectedImages.value = [];
+  imagePreviews.value = [];
+  imageInputKey.value += 1;
+}
+
+function handleImageSelection(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files || []);
+
+  if (files.length > 3) {
+    alert("Você pode selecionar no máximo 3 imagens.");
+    input.value = "";
+    return;
+  }
+
+  const hasInvalidType = files.some((file) => !file.type.startsWith("image/"));
+  if (hasInvalidType) {
+    alert("Selecione apenas arquivos de imagem.");
+    input.value = "";
+    return;
+  }
+
+  resetSelectedImages();
+  selectedImages.value = files;
+  imagePreviews.value = files.map((file) => URL.createObjectURL(file));
+}
+
 function openAddModal() {
   editingHotel.value = null;
   form.value = { name: "", description: "", status: "ativo" };
+  resetSelectedImages();
   isModalOpen.value = true;
 }
 
@@ -172,6 +242,7 @@ function editHotel(hotel: Hotel) {
 function closeModal() {
   isModalOpen.value = false;
   editingHotel.value = null;
+  resetSelectedImages();
 }
 
 async function saveHotel() {
@@ -181,13 +252,16 @@ async function saveHotel() {
     if (editingHotel.value) {
       await hotelStore.updateHotel(editingHotel.value.id, form.value);
     } else {
-      await hotelStore.createHotel({
-        name: form.value.name,
-        description: form.value.description,
-        status: form.value.status,
-        archived: false,
-        owner_id: authStore.user?.id || "",
-      });
+      await hotelStore.createHotel(
+        {
+          name: form.value.name,
+          description: form.value.description,
+          status: form.value.status,
+          archived: false,
+          owner_id: authStore.user?.id || "",
+        },
+        selectedImages.value,
+      );
     }
     closeModal();
   } catch (error) {
