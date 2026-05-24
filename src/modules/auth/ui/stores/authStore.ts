@@ -35,6 +35,8 @@ export const useAuthStore = defineStore("auth", () => {
         username: data.user.username,
         full_name: data.user.fullName,
         is_admin: data.user.isAdmin,
+        status: data.user.status,
+        deleted_at: data.user.deletedAt,
         created_at: data.user.createdAt,
         updated_at: data.user.updatedAt,
       };
@@ -133,6 +135,8 @@ export const useAuthStore = defineStore("auth", () => {
         username: currentUser.username,
         full_name: currentUser.fullName,
         is_admin: currentUser.isAdmin,
+        status: currentUser.status,
+        deleted_at: currentUser.deletedAt,
         created_at: currentUser.createdAt,
         updated_at: currentUser.updatedAt,
       };

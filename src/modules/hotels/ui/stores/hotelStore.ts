@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { hotelService } from "@/modules/hotels/data/services/hotelService";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
-import type { Hotel } from "@/core/utils/types";
+import type { Hotel, OwnershipTransfer } from "@/core/utils/types";
 import { i18n } from "@/core/i18n";
 
 export const useHotelStore = defineStore("hotel", () => {
@@ -12,6 +12,7 @@ export const useHotelStore = defineStore("hotel", () => {
   const currentHotel = ref<Hotel | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const pendingTransfers = ref<OwnershipTransfer[]>([]);
 
   const activeHotels = computed(() =>
     hotels.value.filter((h) => h.status === "ENABLED"),
@@ -124,11 +125,39 @@ export const useHotelStore = defineStore("hotel", () => {
     }
   }
 
+  async function fetchPendingTransfers() {
+    try {
+      const token = useAuthStore().token ?? "";
+      pendingTransfers.value = await hotelService.listPendingTransfers(token);
+    } catch {
+      // silently fail — transfers are non-critical
+    }
+  }
+
+  async function respondToTransfer(
+    transferId: string,
+    action: "accept" | "reject",
+  ) {
+    const token = useAuthStore().token ?? "";
+    await hotelService.respondToTransfer(transferId, action, token);
+    await fetchPendingTransfers();
+    if (action === "accept") {
+      await fetchHotels();
+    }
+  }
+
+  async function cancelTransfer(transferId: string) {
+    const token = useAuthStore().token ?? "";
+    await hotelService.cancelOwnershipTransfer(transferId, token);
+    await fetchHotels();
+  }
+
   return {
     hotels,
     currentHotel,
     loading,
     error,
+    pendingTransfers,
     activeHotels,
     archivedHotels,
     fetchHotels,
@@ -136,5 +165,8 @@ export const useHotelStore = defineStore("hotel", () => {
     createHotel,
     updateHotel,
     archiveHotel,
+    fetchPendingTransfers,
+    respondToTransfer,
+    cancelTransfer,
   };
 });

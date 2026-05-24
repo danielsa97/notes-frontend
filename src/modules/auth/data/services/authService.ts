@@ -9,6 +9,8 @@ type LoginResponse = {
     username: string;
     fullName: string;
     isAdmin: boolean;
+    status: "ENABLED" | "DISABLED" | "DELETED";
+    deletedAt: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -19,8 +21,16 @@ type RegisteredUser = {
   username: string;
   full_name: string;
   is_admin: boolean;
+  status: "ENABLED" | "DISABLED" | "DELETED";
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type UpdateUserPayload = {
+  fullName?: string;
+  isAdmin?: boolean;
+  status?: "ENABLED" | "DISABLED" | "DELETED";
 };
 
 type RegisterPayload = {
@@ -65,6 +75,36 @@ export const authService = {
     return apiRequest<{ ok: boolean }>(`/auth/users/${userId}/hotels`, {
       method: "PUT",
       body: { hotelIds },
+      token,
+    });
+  },
+
+  async updateUser(userId: string, payload: UpdateUserPayload, token: string) {
+    return apiRequest<{ user: User }>(`/auth/users/${userId}`, {
+      method: "PUT",
+      body: payload,
+      token,
+    });
+  },
+
+  async updateUserPassword(userId: string, newPassword: string, token: string) {
+    return apiRequest<{ ok: boolean }>(`/auth/users/${userId}/password`, {
+      method: "PATCH",
+      body: { newPassword },
+      token,
+    });
+  },
+
+  async softDeleteUser(userId: string, token: string) {
+    return apiRequest<{ ok: boolean }>(`/auth/users/${userId}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async toggleUserStatus(userId: string, token: string) {
+    return apiRequest<{ user: User }>(`/auth/users/${userId}/toggle-status`, {
+      method: "PATCH",
       token,
     });
   },

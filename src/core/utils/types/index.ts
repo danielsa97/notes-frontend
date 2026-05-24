@@ -4,7 +4,9 @@ export interface User {
   username: string;
   full_name: string;
   is_admin: boolean;
+  status: "ENABLED" | "DISABLED" | "DELETED";
   avatar_url?: string;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
   hotel_memberships?: Array<{
@@ -21,8 +23,33 @@ export interface Hotel {
   status: "ENABLED" | "DISABLED" | "ARCHIVED";
   image_urls?: string[];
   my_role?: "owner" | "collaborator";
+  pending_transfer?: {
+    id: string;
+    expires_at: string;
+    to_user: { username: string; full_name: string };
+  } | null;
   created_at: string;
   updated_at: string;
+}
+
+// Ownership transfer types
+export interface OwnershipTransfer {
+  id: string;
+  hotel_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  expires_at: string;
+  hotel: { id: string; name: string; image_urls: string[] };
+  from_user: { id: string; username: string; full_name: string };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSearchResult {
+  id: string;
+  username: string;
+  full_name: string;
 }
 
 // Activity/Task types

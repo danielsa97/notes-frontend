@@ -19,6 +19,48 @@
         :message="hotelStore.error"
       />
 
+      <!-- Pending ownership transfer requests -->
+      <div v-if="hotelStore.pendingTransfers.length > 0" class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ t("hotels.pendingTransfers.sectionTitle") }}</h2>
+        <p class="text-sm text-gray-600 mb-4">{{ t("hotels.pendingTransfers.sectionSubtitle") }}</p>
+        
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.name") }}</th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.pendingTransfers.from", { name: "" }).replace(/ Enviado por $/, "") }}</th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.pendingTransfers.expiresIn", { time: "" }).replace(/ em $/, "") }}</th>
+                <th class="text-right px-6 py-3 font-medium text-gray-600">{{ t("users.table.actions") }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="transfer in hotelStore.pendingTransfers" :key="transfer.id" class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 font-medium text-gray-900">{{ transfer.hotel.name }}</td>
+                <td class="px-6 py-4 text-gray-600">{{ transfer.from_user.full_name }}</td>
+                <td class="px-6 py-4 text-amber-600 font-medium">{{ expiresIn(transfer.expires_at) }}</td>
+                <td class="px-6 py-4 text-right space-x-2">
+                  <button
+                    @click="handleRespondTransfer(transfer.id, 'accept', transfer.hotel.name)"
+                    :disabled="respondingTransferId === transfer.id"
+                    class="px-3 py-1.5 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60 transition"
+                  >
+                    {{ t("hotels.pendingTransfers.accept") }}
+                  </button>
+                  <button
+                    @click="handleRespondTransfer(transfer.id, 'reject', transfer.hotel.name)"
+                    :disabled="respondingTransferId === transfer.id"
+                    class="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-60 transition"
+                  >
+                    {{ t("hotels.pendingTransfers.reject") }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <Loading v-if="false" />
 
       <!-- Shimmer skeleton while loading -->
@@ -80,7 +122,7 @@
                   {{ t(`hotels.statusValues.${hotel.status}`) }}
                 </Badge>
               </div>
-              <div v-if="authStore.isAdmin" class="relative">
+              <div v-if="authStore.isAdmin || hotel.my_role === 'owner'" class="relative">
                 <button
                   @click="openMenu(hotel.id)"
                   class="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -89,29 +131,42 @@
                 </button>
                 <div
                   v-if="activeMenu === hotel.id"
-                  class="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]"
+                  class="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[180px]"
                 >
+                  <template v-if="authStore.isAdmin">
+                    <button
+                      @click="editHotel(hotel)"
+                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
+                    >
+                      {{ t("hotels.edit") }}
+                    </button>
+                    <button
+                      @click="toggleStatus(hotel)"
+                      :disabled="hotel.status === 'ARCHIVED'"
+                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
+                      :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'"
+                    >
+                      {{ t("hotels.toggleStatus") }}
+                    </button>
+                    <button
+                      @click="requestArchive(hotel)"
+                      :disabled="hotel.status === 'ARCHIVED'"
+                      class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
+                      :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-orange-600'"
+                    >
+                      {{ t("hotels.archive") }}
+                    </button>
+                    <hr v-if="hotel.my_role === 'owner'" class="my-1 border-gray-100" />
+                  </template>
+                  <!-- Transfer ownership: always active, opens modal showing status or search -->
                   <button
-                    @click="editHotel(hotel)"
-                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
-                  >
-                    {{ t("hotels.edit") }}
-                  </button>
-                  <button
-                    @click="toggleStatus(hotel)"
+                    v-if="hotel.my_role === 'owner'"
+                    @click="requestTransfer(hotel)"
                     :disabled="hotel.status === 'ARCHIVED'"
                     class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
-                    :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'"
+                    :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-blue-600'"
                   >
-                    {{ t("hotels.toggleStatus") }}
-                  </button>
-                  <button
-                    @click="requestArchive(hotel)"
-                    :disabled="hotel.status === 'ARCHIVED'"
-                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
-                    :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-orange-600'"
-                  >
-                    {{ t("hotels.archive") }}
+                    {{ t("hotels.transferOwnership") }}
                   </button>
                 </div>
               </div>
@@ -245,6 +300,138 @@
           <strong>{{ archivingHotel?.name }}</strong>
         </p>
       </Modal>
+
+      <!-- Transfer ownership modal -->
+      <Modal
+        :isOpen="isTransferModalOpen"
+        :title="t('hotels.transferModal.title', { name: transferHotel?.name ?? '' })"
+        @close="closeTransferModal"
+      >
+        <Alert
+          v-if="transferError"
+          type="error"
+          :title="t('hotels.errorTitle')"
+          :message="transferError"
+        />
+
+        <!-- STATUS MODE: a pending transfer already exists -->
+        <div v-if="transferHotel?.pending_transfer" class="space-y-4">
+          <Alert
+            v-if="transferSuccess"
+            type="success"
+            :title="t('hotels.transferModal.sendRequest')"
+            :message="transferSuccess"
+          />
+          <p class="text-sm text-gray-600">{{ t("hotels.transferModal.sentTo") }}</p>
+          <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <div class="w-9 h-9 rounded-full bg-amber-200 flex items-center justify-center text-amber-800 font-semibold text-sm shrink-0">
+              {{ transferHotel.pending_transfer.to_user.full_name.charAt(0).toUpperCase() }}
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-900">{{ transferHotel.pending_transfer.to_user.full_name }}</p>
+              <p class="text-xs text-gray-500">@{{ transferHotel.pending_transfer.to_user.username }}</p>
+            </div>
+            <div class="ml-auto text-right shrink-0">
+              <p class="text-xs text-amber-600 font-medium">
+                {{ t("hotels.pendingTransfers.expiresIn", { time: expiresIn(transferHotel.pending_transfer.expires_at) }) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEARCH MODE: send a new transfer request -->
+        <div v-else class="space-y-4">
+          <Alert
+            v-if="transferSuccess"
+            type="success"
+            :title="t('hotels.transferModal.sendRequest')"
+            :message="transferSuccess"
+          />
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ t("hotels.transferModal.searchLabel") }}
+            </label>
+            <Input
+              v-model="transferSearch"
+              :placeholder="t('hotels.transferModal.searchPlaceholder')"
+              @input="onTransferSearchInput"
+            />
+          </div>
+
+          <!-- Search results -->
+          <div v-if="transferSearchLoading" class="text-sm text-gray-500">
+            {{ t("hotels.transferModal.searching") }}
+          </div>
+          <ul
+            v-else-if="transferSearchResults.length > 0 && !transferSelectedUser"
+            class="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-48 overflow-y-auto"
+          >
+            <li
+              v-for="user in transferSearchResults"
+              :key="user.id"
+              @click="selectTransferUser(user)"
+              class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition"
+            >
+              <div>
+                <p class="text-sm font-medium text-gray-900">{{ user.full_name }}</p>
+                <p class="text-xs text-gray-500">@{{ user.username }}</p>
+              </div>
+            </li>
+          </ul>
+          <p
+            v-else-if="transferSearch.length >= 2 && !transferSearchLoading && transferSearchResults.length === 0 && !transferSelectedUser"
+            class="text-sm text-gray-500"
+          >
+            {{ t("hotels.transferModal.noResults") }}
+          </p>
+
+          <!-- Selected user -->
+          <div
+            v-if="transferSelectedUser"
+            class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5"
+          >
+            <div>
+              <p class="text-sm font-medium text-blue-900">{{ transferSelectedUser.full_name }}</p>
+              <p class="text-xs text-blue-600">@{{ transferSelectedUser.username }}</p>
+            </div>
+            <button
+              @click="clearTransferUser"
+              class="text-blue-400 hover:text-blue-600 text-lg leading-none"
+              aria-label="Remove"
+            >×</button>
+          </div>
+        </div>
+
+        <template #footer>
+          <!-- Status mode footer -->
+          <template v-if="transferHotel?.pending_transfer">
+            <Button variant="ghost" :disabled="cancelingTransfer" @click="closeTransferModal">
+              {{ t("common.close") }}
+            </Button>
+            <Button
+              variant="danger"
+              :loading="cancelingTransfer"
+              :disabled="cancelingTransfer"
+              @click="cancelTransfer"
+            >
+              {{ t("hotels.transferModal.cancelTransfer") }}
+            </Button>
+          </template>
+          <!-- Search mode footer -->
+          <template v-else>
+            <Button variant="ghost" :disabled="submittingTransfer" @click="closeTransferModal">
+              {{ t("common.cancel") }}
+            </Button>
+            <Button
+              :loading="submittingTransfer"
+              :disabled="submittingTransfer || !transferSelectedUser"
+              @click="submitTransfer"
+            >
+              {{ t("hotels.transferModal.sendRequest") }}
+            </Button>
+          </template>
+        </template>
+      </Modal>
     </div>
   </AppLayout>
 </template>
@@ -254,6 +441,7 @@ import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { hotelService } from "@/modules/hotels/data/services/hotelService";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Card from "@/shared/components/Card.vue";
 import Button from "@/shared/components/Button.vue";
@@ -266,7 +454,7 @@ import Shimmer from "@/shared/components/Shimmer.vue";
 import Badge from "@/shared/components/Badge.vue";
 import ImagePicker from "@/shared/components/ImagePicker.vue";
 import { MoreVertical, AlertTriangle, Building2 } from "lucide-vue-next";
-import type { Hotel } from "@/core/utils/types";
+import type { Hotel, UserSearchResult } from "@/core/utils/types";
 
 const hotelStore = useHotelStore();
 const authStore = useAuthStore();
@@ -287,6 +475,20 @@ const form = ref({
   description: "",
   status: "ENABLED" as "ENABLED" | "DISABLED",
 });
+
+// Transfer ownership state
+const isTransferModalOpen = ref(false);
+const transferHotel = ref<Hotel | null>(null);
+const transferSearch = ref("");
+const transferSearchResults = ref<UserSearchResult[]>([]);
+const transferSearchLoading = ref(false);
+const transferSelectedUser = ref<UserSearchResult | null>(null);
+const submittingTransfer = ref(false);
+const cancelingTransfer = ref(false);
+const transferError = ref("");
+const transferSuccess = ref("");
+const respondingTransferId = ref<string | null>(null);
+let transferSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 function resetSelectedImages() {
   imagePreviews.value.forEach((url) => URL.revokeObjectURL(url));
@@ -409,12 +611,137 @@ function openMenu(hotelId: string) {
   activeMenu.value = activeMenu.value === hotelId ? null : hotelId;
 }
 
+function requestTransfer(hotel: Hotel) {
+  transferHotel.value = hotel;
+  transferSearch.value = "";
+  transferSearchResults.value = [];
+  transferSelectedUser.value = null;
+  transferError.value = "";
+  transferSuccess.value = "";
+  cancelingTransfer.value = false;
+  activeMenu.value = null;
+  isTransferModalOpen.value = true;
+}
+
+function closeTransferModal() {
+  isTransferModalOpen.value = false;
+  transferHotel.value = null;
+  transferSearch.value = "";
+  transferSearchResults.value = [];
+  transferSelectedUser.value = null;
+  transferError.value = "";
+  transferSuccess.value = "";
+  cancelingTransfer.value = false;
+}
+
+function onTransferSearchInput() {
+  transferSelectedUser.value = null;
+  if (transferSearchTimer) clearTimeout(transferSearchTimer);
+  if (transferSearch.value.trim().length < 2) {
+    transferSearchResults.value = [];
+    return;
+  }
+  transferSearchLoading.value = true;
+  transferSearchTimer = setTimeout(async () => {
+    try {
+      const token = authStore.token ?? "";
+      transferSearchResults.value = await hotelService.searchUsersForTransfer(
+        transferSearch.value.trim(),
+        token,
+      );
+    } catch {
+      transferSearchResults.value = [];
+    } finally {
+      transferSearchLoading.value = false;
+    }
+  }, 350);
+}
+
+function selectTransferUser(user: UserSearchResult) {
+  transferSelectedUser.value = user;
+  transferSearchResults.value = [];
+}
+
+function clearTransferUser() {
+  transferSelectedUser.value = null;
+  transferSearch.value = "";
+}
+
+async function submitTransfer() {
+  if (!transferHotel.value || !transferSelectedUser.value || submittingTransfer.value) return;
+  submittingTransfer.value = true;
+  transferError.value = "";
+  transferSuccess.value = "";
+  try {
+    const token = authStore.token ?? "";
+    await hotelService.createOwnershipTransfer(
+      transferHotel.value.id,
+      transferSelectedUser.value.username,
+      token,
+    );
+    await hotelStore.fetchHotels();
+    // Refresh transferHotel so the modal switches to STATUS MODE
+    const updated = hotelStore.hotels.find((h) => h.id === transferHotel.value!.id);
+    if (updated) transferHotel.value = updated;
+    transferSuccess.value = t("hotels.transferModal.successMessage");
+    transferSelectedUser.value = null;
+    transferSearch.value = "";
+  } catch (err) {
+    transferError.value =
+      err instanceof Error ? err.message : t("hotels.transferModal.errorFallback");
+  } finally {
+    submittingTransfer.value = false;
+  }
+}
+
+async function cancelTransfer() {
+  if (!transferHotel.value?.pending_transfer || cancelingTransfer.value) return;
+  cancelingTransfer.value = true;
+  transferError.value = "";
+  try {
+    await hotelStore.cancelTransfer(transferHotel.value.pending_transfer.id);
+    closeTransferModal();
+  } catch (err) {
+    transferError.value =
+      err instanceof Error ? err.message : t("hotels.transferModal.cancelError");
+    cancelingTransfer.value = false;
+  }
+}
+
+function expiresIn(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return t("hotels.pendingTransfers.expired");
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+async function handleRespondTransfer(
+  transferId: string,
+  action: "accept" | "reject",
+  hotelName: string,
+) {
+  respondingTransferId.value = transferId;
+  try {
+    await hotelStore.respondToTransfer(transferId, action);
+    if (action === "accept") {
+      // brief feedback via store error repurpose — use a local alert instead
+      hotelStore.error = null;
+    }
+  } catch {
+    // handled in store
+  } finally {
+    respondingTransferId.value = null;
+  }
+}
+
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString(locale.value);
 }
 
 onMounted(async () => {
-  await hotelStore.fetchHotels();
+  await Promise.all([hotelStore.fetchHotels(), hotelStore.fetchPendingTransfers()]);
 });
 </script>
 

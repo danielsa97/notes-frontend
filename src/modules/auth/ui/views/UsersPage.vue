@@ -19,6 +19,13 @@
         :message="fetchError"
       />
 
+      <Alert
+        v-if="actionSuccess"
+        type="success"
+        :title="t('common.save')"
+        :message="actionSuccess"
+      />
+
       <!-- Shimmer skeleton while loading -->
       <div v-if="loading" class="bg-white rounded-lg shadow overflow-hidden">
         <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex gap-6">
@@ -50,12 +57,17 @@
                 {{ t("users.table.role") }}
               </th>
               <th class="text-left px-6 py-3 font-medium text-gray-600">
+                {{ t("users.table.status") }}
+              </th>
+              <th class="text-left px-6 py-3 font-medium text-gray-600">
                 {{ t("users.table.hotels") }}
               </th>
               <th class="text-left px-6 py-3 font-medium text-gray-600">
                 {{ t("users.table.createdAt") }}
               </th>
-              <th class="px-6 py-3"></th>
+              <th class="text-left px-6 py-3 font-medium text-gray-600">
+                {{ t("users.table.actions") }}
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -73,6 +85,11 @@
                   {{ user.is_admin ? t("users.role.admin") : t("users.role.user") }}
                 </Badge>
               </td>
+              <td class="px-6 py-4">
+                <Badge :variant="statusBadgeVariant(user.status)">
+                  {{ t(`users.statusValues.${user.status}`) }}
+                </Badge>
+              </td>
               <td class="px-6 py-4 text-gray-600 text-sm">
                 {{ (user.hotel_memberships || []).length }}
                 {{ t("users.hotelCount") }}
@@ -80,12 +97,15 @@
               <td class="px-6 py-4 text-gray-500">
                 {{ formatDate(user.created_at) }}
               </td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 text-right">
                 <button
-                  @click="openMembershipModal(user)"
-                  class="text-sm text-blue-600 hover:underline whitespace-nowrap"
+                  @click.stop="toggleMenu($event, user)"
+                  class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                  :aria-label="t('users.table.actions')"
                 >
-                  {{ t("users.manageHotels") }}
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
                 </button>
               </td>
             </tr>
@@ -187,6 +207,195 @@
       </template>
     </Modal>
 
+    <Modal
+      :isOpen="isEditModalOpen"
+      :title="t('users.editModalTitle')"
+      @close="closeEditModal"
+      @confirm="saveUserEdit"
+    >
+      <Alert
+        v-if="editError"
+        type="error"
+        :title="t('users.errorTitle')"
+        :message="editError"
+      />
+      <FormGroup @submit="saveUserEdit" class="space-y-4">
+        <Input
+          v-model="editForm.fullName"
+          type="text"
+          :label="t('auth.register.fullName')"
+          :placeholder="t('auth.register.fullNamePlaceholder')"
+          required
+        />
+        <Input
+          v-model="editForm.username"
+          type="text"
+          :label="t('auth.register.username')"
+          disabled
+        />
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ t("users.table.status") }}
+          </label>
+          <select
+            v-model="editForm.status"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="ENABLED">{{ t("users.statusValues.ENABLED") }}</option>
+            <option
+              value="DISABLED"
+              :disabled="isCurrentUserById(editForm.id) || isLastActiveAdminEditing"
+            >
+              {{ t("users.statusValues.DISABLED") }}
+            </option>
+            <option
+              value="DELETED"
+              :disabled="isCurrentUserById(editForm.id) || isLastActiveAdminEditing"
+            >
+              {{ t("users.statusValues.DELETED") }}
+            </option>
+          </select>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            v-model="editForm.isAdmin"
+            type="checkbox"
+            class="rounded border-gray-300"
+            :disabled="isLastActiveAdminEditing"
+          />
+          {{ t("auth.register.adminCheckbox") }}
+        </label>
+        <p v-if="isLastActiveAdminEditing" class="text-xs text-amber-600">
+          {{ t("users.lastActiveAdminHint") }}
+        </p>
+      </FormGroup>
+      <template #footer>
+        <Button variant="ghost" :disabled="editing" @click="closeEditModal">
+          {{ t("common.cancel") }}
+        </Button>
+        <Button :loading="editing" :disabled="editing" @click="saveUserEdit">
+          {{ t("common.save") }}
+        </Button>
+      </template>
+    </Modal>
+
+    <Modal
+      :isOpen="isPasswordModalOpen"
+      :title="t('users.passwordModalTitle', { name: passwordTarget?.full_name ?? '' })"
+      @close="closePasswordModal"
+      @confirm="saveUserPassword"
+    >
+      <Alert
+        v-if="passwordError"
+        type="error"
+        :title="t('users.errorTitle')"
+        :message="passwordError"
+      />
+      <FormGroup @submit="saveUserPassword" class="space-y-4">
+        <Input
+          v-model="passwordForm.newPassword"
+          type="password"
+          :label="t('users.newPassword')"
+          :placeholder="t('users.newPasswordPlaceholder')"
+          required
+        />
+        <Input
+          v-model="passwordForm.confirmPassword"
+          type="password"
+          :label="t('users.confirmNewPassword')"
+          :placeholder="t('users.confirmNewPasswordPlaceholder')"
+          required
+          :error="
+            passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword
+              ? t('users.errors.passwordMismatch')
+              : ''
+          "
+        />
+      </FormGroup>
+      <template #footer>
+        <Button variant="ghost" :disabled="updatingPassword" @click="closePasswordModal">
+          {{ t("common.cancel") }}
+        </Button>
+        <Button
+          :loading="updatingPassword"
+          :disabled="updatingPassword"
+          @click="saveUserPassword"
+        >
+          {{ t("common.save") }}
+        </Button>
+      </template>
+    </Modal>
+
+    <Modal
+      :isOpen="isDeleteModalOpen"
+      :title="t('users.deleteModalTitle')"
+      @close="closeDeleteModal"
+      @confirm="confirmSoftDelete"
+    >
+      <Alert
+        v-if="deleteError"
+        type="error"
+        :title="t('users.errorTitle')"
+        :message="deleteError"
+      />
+      <p class="text-sm text-gray-700 mb-3">{{ t("users.deleteConfirmMessage") }}</p>
+      <p class="text-sm text-gray-900 font-medium">{{ deletingUser?.full_name }}</p>
+      <template #footer>
+        <Button variant="ghost" :disabled="deleting" @click="closeDeleteModal">
+          {{ t("common.cancel") }}
+        </Button>
+        <Button variant="danger" :loading="deleting" :disabled="deleting" @click="confirmSoftDelete">
+          {{ t("users.actions.delete") }}
+        </Button>
+      </template>
+    </Modal>
+
+    <!-- Actions dropdown (teleported to avoid overflow-hidden clipping) -->
+    <Teleport to="body">
+      <template v-if="menuUser">
+        <div class="fixed inset-0 z-40" @click="closeMenu" />
+        <div
+          :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }"
+          class="fixed z-50 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm"
+        >
+          <button
+            @click="handleMenuEdit"
+            class="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {{ t("users.actions.edit") }}
+          </button>
+          <button
+            @click="handleMenuPassword"
+            class="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            {{ t("users.actions.password") }}
+          </button>
+          <button
+            @click="handleMenuManageHotels"
+            :disabled="menuUser.status === 'DELETED'"
+            class="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {{ t("users.actions.manageHotels") }}
+          </button>
+          <button
+            @click="handleMenuToggleStatus"
+            :disabled="isCurrentUser(menuUser!) || menuUser!.status === 'DELETED' || isLastActiveAdmin(menuUser!)"
+            class="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {{ menuUser?.status === "ENABLED" ? t("users.actions.disable") : t("users.actions.enable") }}
+          </button>
+          <hr class="my-1 border-gray-100" />
+          <button
+            @click="handleMenuDelete"
+            :disabled="isCurrentUser(menuUser) || menuUser.status === 'DELETED' || isLastActiveAdmin(menuUser)"
+            class="w-full text-left px-4 py-2.5 text-red-600 hover:bg-red-50 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {{ t("users.actions.delete") }}
+          </button>
+        </div>
+      </template>
+    </Teleport>
+
     <!-- Hotel membership management modal -->
     <Modal
       :isOpen="isMembershipModalOpen"
@@ -225,7 +434,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
@@ -236,7 +445,6 @@ import Badge from "@/shared/components/Badge.vue";
 import Button from "@/shared/components/Button.vue";
 import FormGroup from "@/shared/components/FormGroup.vue";
 import Input from "@/shared/components/Input.vue";
-import Loading from "@/shared/components/Loading.vue";
 import Shimmer from "@/shared/components/Shimmer.vue";
 import Modal from "@/shared/components/Modal.vue";
 import type { User } from "@/core/utils/types";
@@ -248,6 +456,7 @@ const { t, locale } = useI18n();
 const users = ref<User[]>([]);
 const loading = ref(false);
 const fetchError = ref("");
+const actionSuccess = ref("");
 const isCreateModalOpen = ref(false);
 const createError = ref("");
 const createSuccess = ref("");
@@ -258,6 +467,72 @@ const isMembershipModalOpen = ref(false);
 const managingUser = ref<User | null>(null);
 const membershipForm = ref<string[]>([]);
 const membershipError = ref("");
+
+// Edit user modal
+const isEditModalOpen = ref(false);
+const editing = ref(false);
+const editError = ref("");
+const editForm = ref({
+  id: "",
+  fullName: "",
+  username: "",
+  isAdmin: false,
+  status: "ENABLED" as "ENABLED" | "DISABLED" | "DELETED",
+});
+
+// Password modal
+const isPasswordModalOpen = ref(false);
+const updatingPassword = ref(false);
+const passwordError = ref("");
+const passwordTarget = ref<User | null>(null);
+const passwordForm = ref({
+  newPassword: "",
+  confirmPassword: "",
+});
+
+// Soft delete modal
+const isDeleteModalOpen = ref(false);
+const deleting = ref(false);
+const deleteError = ref("");
+const deletingUser = ref<User | null>(null);
+
+// Actions dropdown menu
+const openMenuId = ref<string | null>(null);
+const menuUser = ref<User | null>(null);
+const menuPosition = ref({ top: 0, left: 0 });
+
+function toggleMenu(event: MouseEvent, user: User) {
+  if (openMenuId.value === user.id) {
+    closeMenu();
+    return;
+  }
+  const btn = event.currentTarget as HTMLElement;
+  const rect = btn.getBoundingClientRect();
+  const menuWidth = 192; // w-48
+  const menuHeight = 168; // approximate height for 4 items + separator
+
+  let top = rect.bottom + 4;
+  let left = rect.right - menuWidth;
+
+  if (left < 8) left = 8;
+  if (left + menuWidth > window.innerWidth - 8) left = window.innerWidth - menuWidth - 8;
+  if (top + menuHeight > window.innerHeight - 8) top = rect.top - menuHeight - 4;
+
+  menuPosition.value = { top, left };
+  menuUser.value = user;
+  openMenuId.value = user.id;
+}
+
+function closeMenu() {
+  openMenuId.value = null;
+  menuUser.value = null;
+}
+
+function handleMenuEdit() { if (menuUser.value) { openEditModal(menuUser.value); closeMenu(); } }
+function handleMenuPassword() { if (menuUser.value) { openPasswordModal(menuUser.value); closeMenu(); } }
+function handleMenuManageHotels() { if (menuUser.value) { openMembershipModal(menuUser.value); closeMenu(); } }
+function handleMenuToggleStatus() { if (menuUser.value) { toggleUserStatus(menuUser.value); closeMenu(); } }
+function handleMenuDelete() { if (menuUser.value) { openDeleteModal(menuUser.value); closeMenu(); } }
 
 const form = ref({
   fullName: "",
@@ -280,6 +555,36 @@ function resetForm() {
   createError.value = "";
   createSuccess.value = "";
 }
+
+function isCurrentUser(user: User) {
+  return authStore.user?.id === user.id;
+}
+
+function isCurrentUserById(userId: string) {
+  return authStore.user?.id === userId;
+}
+
+function statusBadgeVariant(status: User["status"]): "success" | "warning" | "danger" {
+  if (status === "ENABLED") return "success";
+  if (status === "DISABLED") return "warning";
+  return "danger";
+}
+
+function isLastActiveAdmin(user: User) {
+  if (!user.is_admin || user.status !== "ENABLED" || user.deleted_at) return false;
+
+  const activeAdmins = users.value.filter(
+    (u) => u.is_admin && u.status === "ENABLED" && !u.deleted_at,
+  );
+
+  return activeAdmins.length === 1 && activeAdmins[0]?.id === user.id;
+}
+
+const isLastActiveAdminEditing = computed(() => {
+  const current = users.value.find((u) => u.id === editForm.value.id);
+  if (!current) return false;
+  return isLastActiveAdmin(current);
+});
 
 function openCreateModal() {
   resetForm();
@@ -335,6 +640,145 @@ async function loadUsers() {
     fetchError.value = err instanceof Error ? err.message : t("users.errors.fetchUsers");
   } finally {
     loading.value = false;
+  }
+}
+
+function openEditModal(user: User) {
+  editError.value = "";
+  editForm.value = {
+    id: user.id,
+    fullName: user.full_name,
+    username: user.username,
+    isAdmin: user.is_admin,
+    status: user.status,
+  };
+  isEditModalOpen.value = true;
+}
+
+function closeEditModal() {
+  isEditModalOpen.value = false;
+  editError.value = "";
+}
+
+async function saveUserEdit() {
+  if (!editForm.value.id || editing.value) return;
+  if (!editForm.value.fullName) return;
+
+  editing.value = true;
+  editError.value = "";
+
+  try {
+    const token = authStore.token ?? "";
+    await authService.updateUser(
+      editForm.value.id,
+      {
+        fullName: editForm.value.fullName,
+        isAdmin: editForm.value.isAdmin,
+        status: editForm.value.status,
+      },
+      token,
+    );
+
+    closeEditModal();
+    actionSuccess.value = t("users.updateSuccess");
+    await loadUsers();
+  } catch (err) {
+    editError.value = err instanceof Error ? err.message : t("users.errors.updateUser");
+  } finally {
+    editing.value = false;
+  }
+}
+
+function openPasswordModal(user: User) {
+  passwordTarget.value = user;
+  passwordError.value = "";
+  passwordForm.value = { newPassword: "", confirmPassword: "" };
+  isPasswordModalOpen.value = true;
+}
+
+function closePasswordModal() {
+  isPasswordModalOpen.value = false;
+  passwordTarget.value = null;
+  passwordError.value = "";
+  passwordForm.value = { newPassword: "", confirmPassword: "" };
+}
+
+async function saveUserPassword() {
+  if (!passwordTarget.value || updatingPassword.value) return;
+
+  if (passwordForm.value.newPassword.length < 6) {
+    passwordError.value = t("users.errors.passwordTooShort");
+    return;
+  }
+
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    passwordError.value = t("users.errors.passwordMismatch");
+    return;
+  }
+
+  updatingPassword.value = true;
+  passwordError.value = "";
+
+  try {
+    const token = authStore.token ?? "";
+    await authService.updateUserPassword(
+      passwordTarget.value.id,
+      passwordForm.value.newPassword,
+      token,
+    );
+    closePasswordModal();
+    actionSuccess.value = t("users.passwordSuccess");
+  } catch (err) {
+    passwordError.value =
+      err instanceof Error ? err.message : t("users.errors.updatePassword");
+  } finally {
+    updatingPassword.value = false;
+  }
+}
+
+function openDeleteModal(user: User) {
+  deleteError.value = "";
+  deletingUser.value = user;
+  isDeleteModalOpen.value = true;
+}
+
+function closeDeleteModal() {
+  isDeleteModalOpen.value = false;
+  deleteError.value = "";
+  deletingUser.value = null;
+}
+
+async function confirmSoftDelete() {
+  if (!deletingUser.value || deleting.value) return;
+
+  deleting.value = true;
+  deleteError.value = "";
+
+  try {
+    const token = authStore.token ?? "";
+    await authService.softDeleteUser(deletingUser.value.id, token);
+    closeDeleteModal();
+    actionSuccess.value = t("users.deleteSuccess");
+    await loadUsers();
+  } catch (err) {
+    deleteError.value = err instanceof Error ? err.message : t("users.errors.deleteUser");
+  } finally {
+    deleting.value = false;
+  }
+}
+
+async function toggleUserStatus(user: User) {
+  const token = authStore.token ?? "";
+  try {
+    const updated = await authService.toggleUserStatus(user.id, token);
+    actionSuccess.value = t("users.statusToggleSuccess", { 
+      name: user.full_name,
+      status: updated.status === "ENABLED" ? t("users.statusValues.ENABLED") : t("users.statusValues.DISABLED")
+    });
+    await loadUsers();
+  } catch (err) {
+    actionSuccess.value = "";
+    fetchError.value = err instanceof Error ? err.message : t("users.errors.toggleStatus");
   }
 }
 

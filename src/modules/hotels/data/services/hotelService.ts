@@ -1,5 +1,9 @@
 import { apiRequest, API_BASE_URL } from "@/core/utils/apiClient";
-import type { Hotel } from "@/core/utils/types";
+import type {
+  Hotel,
+  OwnershipTransfer,
+  UserSearchResult,
+} from "@/core/utils/types";
 import { i18n } from "@/core/i18n";
 
 type CreateHotelPayload = {
@@ -107,5 +111,50 @@ export const hotelService = {
       token,
     });
     return { data, error: null };
+  },
+
+  async searchUsersForTransfer(query: string, token: string) {
+    const users = await apiRequest<UserSearchResult[]>(
+      `/hotels/transfers/users?q=${encodeURIComponent(query)}`,
+      { token },
+    );
+    return users;
+  },
+
+  async createOwnershipTransfer(
+    hotelId: string,
+    username: string,
+    token: string,
+  ) {
+    return apiRequest(`/hotels/${hotelId}/transfer`, {
+      method: "POST",
+      body: { username },
+      token,
+    });
+  },
+
+  async listPendingTransfers(token: string) {
+    return apiRequest<OwnershipTransfer[]>("/hotels/transfers/pending", {
+      token,
+    });
+  },
+
+  async respondToTransfer(
+    transferId: string,
+    action: "accept" | "reject",
+    token: string,
+  ) {
+    return apiRequest(`/hotels/transfers/${transferId}/respond`, {
+      method: "PATCH",
+      body: { action },
+      token,
+    });
+  },
+
+  async cancelOwnershipTransfer(transferId: string, token: string) {
+    return apiRequest(`/hotels/transfers/${transferId}`, {
+      method: "DELETE",
+      token,
+    });
   },
 };
