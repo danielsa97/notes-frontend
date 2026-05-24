@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { ref } from "vue";
 
 // Helper para armazenar dados no localStorage
 const useLocalStorage = (key: string, initialValue: any = null) => {

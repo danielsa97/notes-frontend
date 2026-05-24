@@ -17,12 +17,6 @@
         >
           Entrar
         </router-link>
-        <router-link
-          to="/register"
-          class="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
-        >
-          Registrar
-        </router-link>
       </div>
     </div>
   </div>

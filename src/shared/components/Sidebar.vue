@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 
 const route = useRoute();
 const router = useRouter();
@@ -46,7 +46,7 @@ const navItems = [
 ];
 
 const userName = computed(() => authStore.user?.full_name || "Usuário");
-const userEmail = computed(() => authStore.user?.email || "");
+const userEmail = computed(() => authStore.user?.username || "");
 
 function isActive(path: string) {
   return route.path === path;

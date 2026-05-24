@@ -9,31 +9,37 @@ export const useAuthStore = defineStore("auth", () => {
     "auth_user",
     null,
   );
+  const { value: storedToken, setItem: setStoredToken } = useLocalStorage(
+    "auth_token",
+    null,
+  );
 
   const user = ref<User | null>(storedUser.value);
+  const token = ref<string | null>(storedToken.value);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
   const isAuthenticated = computed(() => user.value !== null);
+  const isAdmin = computed(() => user.value?.is_admin === true);
 
-  async function login(email: string, password: string) {
+  async function login(username: string, password: string) {
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await authService.login(email, password);
-      if (err) throw err;
-
-      // Simulate user object - in real app, fetch from database
+      const data = await authService.login(username, password);
       const userData: User = {
-        id: data?.user?.id || "",
-        email: data?.user?.email || email,
-        full_name: email.split("@")[0],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        id: data.user.id,
+        username: data.user.username,
+        full_name: data.user.fullName,
+        is_admin: data.user.isAdmin,
+        created_at: data.user.createdAt,
+        updated_at: data.user.updatedAt,
       };
 
       user.value = userData;
+      token.value = data.token;
       setStoredUser(userData);
+      setStoredToken(data.token);
       return data;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Login failed";
@@ -43,17 +49,28 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function register(email: string, password: string, fullName: string) {
+  async function register(
+    username: string,
+    password: string,
+    fullName: string,
+    isAdminUser = false,
+  ) {
+    if (!token.value) {
+      throw new Error("Sessao invalida. Faca login novamente.");
+    }
+
     loading.value = true;
     error.value = null;
     try {
-      const { data, error: err } = await authService.register(
-        email,
-        password,
-        fullName,
+      return await authService.register(
+        {
+          username,
+          password,
+          fullName,
+          isAdmin: isAdminUser,
+        },
+        token.value,
       );
-      if (err) throw err;
-      return data;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Registration failed";
       throw err;
@@ -66,10 +83,11 @@ export const useAuthStore = defineStore("auth", () => {
     loading.value = true;
     error.value = null;
     try {
-      const { error: err } = await authService.logout();
-      if (err) throw err;
+      await authService.logout();
       user.value = null;
+      token.value = null;
       setStoredUser(null);
+      setStoredToken(null);
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Logout failed";
       throw err;
@@ -78,25 +96,41 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function resetPassword(email: string) {
-    loading.value = true;
-    error.value = null;
-    try {
-      const { error: err } = await authService.resetPassword(email);
-      if (err) throw err;
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Password reset failed";
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  function checkAuth() {
+  async function checkAuth() {
     const storedAuth = localStorage.getItem("auth_user");
+    const storedAuthToken = localStorage.getItem("auth_token");
+
     if (storedAuth) {
       user.value = JSON.parse(storedAuth);
+    }
+
+    if (storedAuthToken) {
+      token.value = JSON.parse(storedAuthToken);
+    }
+
+    if (!token.value) {
+      user.value = null;
+      setStoredUser(null);
+      return;
+    }
+
+    try {
+      const currentUser = await authService.verifySession(token.value);
+      const normalizedUser: User = {
+        id: currentUser.id,
+        username: currentUser.username,
+        full_name: currentUser.fullName,
+        is_admin: currentUser.isAdmin,
+        created_at: currentUser.createdAt,
+        updated_at: currentUser.updatedAt,
+      };
+      user.value = normalizedUser;
+      setStoredUser(normalizedUser);
+    } catch {
+      user.value = null;
+      token.value = null;
+      setStoredUser(null);
+      setStoredToken(null);
     }
   }
 
@@ -104,11 +138,12 @@ export const useAuthStore = defineStore("auth", () => {
     user,
     loading,
     error,
+    token,
     isAuthenticated,
+    isAdmin,
     login,
     register,
     logout,
-    resetPassword,
     checkAuth,
   };
 });

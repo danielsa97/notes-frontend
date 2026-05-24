@@ -11,7 +11,7 @@ app.use(createPinia());
 
 // Check auth status before routing
 const authStore = useAuthStore();
-authStore.checkAuth();
+await authStore.checkAuth();
 
 app.use(router);
 

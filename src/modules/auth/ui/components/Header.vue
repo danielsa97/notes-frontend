@@ -29,7 +29,13 @@
         <button
           class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
         >
-          <span class="text-sm text-gray-700">{{ userEmail }}</span>
+          <span class="text-sm text-gray-700">@{{ username }}</span>
+          <span
+            v-if="isAdmin"
+            class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"
+          >
+            Admin
+          </span>
           <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
         </button>
 
@@ -52,9 +58,11 @@ import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 const router = useRouter();
 const authStore = useAuthStore();
 
-const userEmail = computed(() => {
-  return authStore.user?.email || "Usuário";
+const username = computed(() => {
+  return authStore.user?.username || "usuario";
 });
+
+const isAdmin = computed(() => authStore.user?.is_admin === true);
 
 async function handleLogout() {
   await authStore.logout();

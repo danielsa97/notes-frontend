@@ -1,42 +1,51 @@
-import { supabase } from "./supabaseClient";
-import type { User } from "@/core/utils/types";
+import { apiRequest } from "@/core/utils/apiClient";
+
+type LoginResponse = {
+  token: string;
+  user: {
+    id: string;
+    username: string;
+    fullName: string;
+    isAdmin: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+};
+
+type RegisterPayload = {
+  username: string;
+  password: string;
+  fullName: string;
+  isAdmin?: boolean;
+};
 
 export const authService = {
-  async register(email: string, password: string, fullName: string) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
+  async register(payload: RegisterPayload, token: string) {
+    return apiRequest<{ user: unknown }>("/auth/register", {
+      method: "POST",
+      body: payload,
+      token,
     });
-    return { data, error };
   },
 
-  async login(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+  async login(username: string, password: string) {
+    return apiRequest<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: {
+        username,
+        password,
+      },
     });
-    return { data, error };
+  },
+
+  async verifySession(token: string) {
+    return apiRequest<LoginResponse["user"]>("/auth/me", {
+      method: "GET",
+      token,
+    });
   },
 
   async logout() {
-    const { error } = await supabase.auth.signOut();
-    return { error };
-  },
-
-  async getCurrentUser() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return user;
-  },
-
-  async resetPassword(email: string) {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email);
-    return { data, error };
+    return Promise.resolve();
   },
 };

@@ -18,9 +18,9 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresGuest: true },
   },
   {
-    path: "/register",
+    path: "/users/new",
     component: () => import("@/modules/auth/ui/views/RegisterPage.vue"),
-    meta: { requiresGuest: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
   {
     path: "/dashboard",
@@ -47,7 +47,7 @@ const router = createRouter({
 router.beforeEach(
   async (
     to: RouteLocationNormalized,
-    from: RouteLocationNormalized,
+    _from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ) => {
     const authStore = useAuthStore();
@@ -56,6 +56,8 @@ router.beforeEach(
     if (to.meta.requiresAuth) {
       if (!authStore.isAuthenticated) {
         next("/login");
+      } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
+        next("/dashboard");
       } else {
         next();
       }

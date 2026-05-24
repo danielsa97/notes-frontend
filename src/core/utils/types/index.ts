@@ -1,8 +1,9 @@
 // User types
 export interface User {
   id: string;
-  email: string;
+  username: string;
   full_name: string;
+  is_admin: boolean;
   avatar_url?: string;
   created_at: string;
   updated_at: string;

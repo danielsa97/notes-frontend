@@ -47,13 +47,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const userEmail = computed(() => {
-  return authStore.user?.email || "Usuário";
+  return authStore.user?.username || "usuario";
 });
 
 async function handleLogout() {

@@ -40,13 +40,21 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const navItems = [
+const navItems = computed(() => [
   { path: "/dashboard", label: "Dashboard", icon: "📊" },
   { path: "/hotels", label: "Hotéis", icon: "🏨" },
-];
+  ...(authStore.user?.is_admin
+    ? [{ path: "/users/new", label: "Novo Usuário", icon: "👤" }]
+    : []),
+]);
 
 const userName = computed(() => authStore.user?.full_name || "Usuário");
-const userEmail = computed(() => authStore.user?.email || "");
+const userEmail = computed(() => {
+  if (!authStore.user) return "";
+  return authStore.user.is_admin
+    ? `@${authStore.user.username} • Admin`
+    : `@${authStore.user.username}`;
+});
 
 function isActive(path: string) {
   return route.path === path;
