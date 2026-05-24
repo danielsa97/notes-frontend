@@ -109,6 +109,23 @@
             </div>
             <p class="text-3xl font-bold text-yellow-600 mt-4">{{ pendingTasks }}</p>
           </Card>
+
+          <Card>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold text-gray-900">{{ t("dashboard.roomsOverview") }}</h2>
+              <BedDouble class="w-10 h-10 text-blue-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl bg-green-50 border border-green-100 p-3">
+                <p class="text-xs text-green-700">{{ t("dashboard.activeRooms") }}</p>
+                <p class="text-2xl font-bold text-green-700">{{ activeRoomsCount }}</p>
+              </div>
+              <div class="rounded-xl bg-gray-50 border border-gray-200 p-3">
+                <p class="text-xs text-gray-700">{{ t("dashboard.inactiveRooms") }}</p>
+                <p class="text-2xl font-bold text-gray-700">{{ inactiveRoomsCount }}</p>
+              </div>
+            </div>
+          </Card>
         </div>
       </template>
     </div>
@@ -116,19 +133,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
+import { useRoomStore } from "@/modules/rooms/ui/stores/roomStore";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Card from "@/shared/components/Card.vue";
 import Shimmer from "@/shared/components/Shimmer.vue";
-import { ClipboardList } from "lucide-vue-next";
+import { ClipboardList, BedDouble } from "lucide-vue-next";
 
 const authStore = useAuthStore();
 const hotelStore = useHotelStore();
 const workspaceStore = useWorkspaceStore();
+const roomStore = useRoomStore();
 const { t } = useI18n();
 
 const userName = computed(
@@ -141,11 +160,24 @@ const currentHotel = computed(() => {
   return hotelStore.hotels.find((hotel) => hotel.id === activeId) || workspaceStore.activeHotel;
 });
 const hotelImages = computed(() => currentHotel.value?.image_urls?.filter(Boolean).slice(0, 3) || []);
+const activeRoomsCount = computed(() => roomStore.enabledRooms.length);
+const inactiveRoomsCount = computed(() => roomStore.disabledRooms.length);
 
 onMounted(async () => {
   await hotelStore.fetchHotels();
   workspaceStore.validateAgainstHotels(hotelStore.hotels);
+  if (workspaceStore.activeHotel?.id) {
+    await roomStore.fetchRooms(workspaceStore.activeHotel.id);
+  }
 });
+
+watch(
+  () => workspaceStore.activeHotel?.id,
+  async (hotelId) => {
+    if (!hotelId) return;
+    await roomStore.fetchRooms(hotelId);
+  },
+);
 </script>
 
 <style scoped></style>

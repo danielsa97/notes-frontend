@@ -43,6 +43,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/rooms",
+    component: () => import("@/modules/rooms/ui/views/RoomsPage.vue"),
+    meta: { requiresAuth: true, requiresWorkspace: true },
+  },
+  {
     path: "/:pathMatch(.*)*",
     redirect: "/hotel-select",
   },

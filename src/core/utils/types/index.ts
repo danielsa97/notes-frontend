@@ -52,6 +52,19 @@ export interface UserSearchResult {
   full_name: string;
 }
 
+// Rooms types
+export interface Room {
+  id: string;
+  room_id: string;
+  type: "CONFORT" | "STANDARD" | "OUTRO";
+  description?: string | null;
+  status: "ENABLED" | "DISABLED";
+  image_urls?: string[];
+  hotel_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Activity/Task types
 export interface Activity {
   id: string;
