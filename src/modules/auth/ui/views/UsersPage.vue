@@ -16,7 +16,22 @@
         :message="fetchError"
       />
 
-      <Loading v-if="loading" :text="t('users.loading')" />
+      <!-- Shimmer skeleton while loading -->
+      <div v-if="loading" class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex gap-6">
+          <Shimmer v-for="i in 6" :key="i" height="0.75rem" :width="i === 1 ? '15%' : i === 2 ? '12%' : i === 3 ? '8%' : i === 4 ? '10%' : i === 5 ? '12%' : '6%'" />
+        </div>
+        <div class="divide-y divide-gray-100">
+          <div v-for="row in 6" :key="row" class="px-6 py-4 flex gap-6 items-center">
+            <Shimmer height="0.875rem" width="18%" />
+            <Shimmer height="0.875rem" width="13%" />
+            <Shimmer height="1.5rem" width="4rem" rounded="full" />
+            <Shimmer height="0.875rem" width="6rem" />
+            <Shimmer height="0.875rem" width="10%" />
+            <Shimmer height="0.875rem" width="5rem" />
+          </div>
+        </div>
+      </div>
 
       <div v-else class="bg-white rounded-lg shadow overflow-hidden">
         <table v-if="users.length > 0" class="w-full text-sm">
@@ -211,6 +226,7 @@ import Button from "@/shared/components/Button.vue";
 import FormGroup from "@/shared/components/FormGroup.vue";
 import Input from "@/shared/components/Input.vue";
 import Loading from "@/shared/components/Loading.vue";
+import Shimmer from "@/shared/components/Shimmer.vue";
 import Modal from "@/shared/components/Modal.vue";
 import type { User } from "@/core/utils/types";
 

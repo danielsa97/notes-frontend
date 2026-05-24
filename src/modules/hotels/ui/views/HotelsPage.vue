@@ -16,7 +16,29 @@
         :message="hotelStore.error"
       />
 
-      <Loading v-if="hotelStore.loading" :text="t('hotels.loading')" />
+      <Loading v-if="false" />
+
+      <!-- Shimmer skeleton while loading -->
+      <div
+        v-if="hotelStore.loading"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        <div
+          v-for="i in 6"
+          :key="i"
+          class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-3"
+        >
+          <Shimmer height="10rem" rounded="lg" />
+          <div class="flex items-start justify-between">
+            <div class="flex-1 space-y-2">
+              <Shimmer height="1.1rem" width="60%" />
+              <Shimmer height="1.4rem" width="3.5rem" rounded="full" />
+            </div>
+          </div>
+          <Shimmer height="0.75rem" width="80%" />
+          <Shimmer height="0.75rem" width="45%" />
+        </div>
+      </div>
 
       <div v-else class="space-y-4">
         <div
@@ -175,6 +197,7 @@ import Input from "@/shared/components/Input.vue";
 import FormGroup from "@/shared/components/FormGroup.vue";
 import Alert from "@/shared/components/Alert.vue";
 import Loading from "@/shared/components/Loading.vue";
+import Shimmer from "@/shared/components/Shimmer.vue";
 import Badge from "@/shared/components/Badge.vue";
 import { MoreVertical } from "lucide-vue-next";
 import type { Hotel } from "@/core/utils/types";

@@ -1,7 +1,26 @@
 <template>
-  <div class="flex items-center justify-center gap-2">
-    <div class="animate-spin text-2xl">⟳</div>
-    <span v-if="text" class="text-gray-600">{{ text }}</span>
+  <div class="flex items-center justify-center gap-3 py-8">
+    <svg
+      class="animate-spin h-6 w-6 text-blue-500"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        class="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        stroke-width="4"
+      />
+      <path
+        class="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+    <span v-if="text" class="text-gray-500 text-sm">{{ text }}</span>
   </div>
 </template>
 
@@ -14,15 +33,3 @@ withDefaults(defineProps<Props>(), {
   text: "",
 });
 </script>
-
-<style scoped>
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-</style>

@@ -15,10 +15,12 @@
 
     <div class="px-4 py-4 border-t border-gray-200">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
-        <div class="flex-1">
-          <p class="text-sm font-medium text-gray-900">{{ userName }}</p>
-          <p class="text-xs text-gray-500">{{ userEmail }}</p>
+        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
+          <span class="text-white text-sm font-bold">{{ initials }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 truncate">{{ userName }}</p>
+          <p class="text-xs text-gray-500 truncate">{{ userEmail }}</p>
         </div>
       </div>
       <button
@@ -57,6 +59,15 @@ const userEmail = computed(() => {
   return authStore.user.is_admin
     ? `@${authStore.user.username} • ${t("navigation.admin")}`
     : `@${authStore.user.username}`;
+});
+const initials = computed(() => {
+  const name = authStore.user?.full_name || "";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
 });
 
 function isActive(path: string) {

@@ -8,70 +8,94 @@
         <p class="text-gray-600">{{ t("dashboard.welcome", { name: userName }) }}</p>
       </div>
 
-      <!-- Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm">{{ t("dashboard.totalHotels") }}</p>
-              <p class="text-3xl font-bold text-gray-900">{{ totalHotels }}</p>
+      <!-- Skeleton while loading -->
+      <template v-if="hotelStore.loading">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card v-for="i in 3" :key="i">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 space-y-2">
+                <Shimmer height="0.75rem" width="55%" />
+                <Shimmer height="2rem" width="3.5rem" />
+              </div>
+              <Shimmer height="2.5rem" width="2.5rem" rounded="full" class="ml-4 flex-shrink-0" />
             </div>
-            <Building2 class="w-10 h-10 text-gray-400" />
-          </div>
-        </Card>
+          </Card>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card v-for="i in 2" :key="i">
+            <Shimmer height="1rem" width="45%" class="mb-4" />
+            <Shimmer height="2.5rem" width="55%" />
+          </Card>
+        </div>
+      </template>
 
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm">{{ t("dashboard.activeHotels") }}</p>
-              <p class="text-3xl font-bold text-green-600">
-                {{ activeHotels }}
-              </p>
+      <!-- Content -->
+      <template v-else>
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-600 text-sm">{{ t("dashboard.totalHotels") }}</p>
+                <p class="text-3xl font-bold text-gray-900">{{ totalHotels }}</p>
+              </div>
+              <Building2 class="w-10 h-10 text-gray-400" />
             </div>
-            <CheckCircle2 class="w-10 h-10 text-green-400" />
-          </div>
-        </Card>
+          </Card>
 
-        <Card>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-gray-600 text-sm">{{ t("dashboard.pendingTasks") }}</p>
-              <p class="text-3xl font-bold text-yellow-600">
-                {{ pendingTasks }}
-              </p>
+          <Card>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-600 text-sm">{{ t("dashboard.activeHotels") }}</p>
+                <p class="text-3xl font-bold text-green-600">
+                  {{ activeHotels }}
+                </p>
+              </div>
+              <CheckCircle2 class="w-10 h-10 text-green-400" />
             </div>
-            <ClipboardList class="w-10 h-10 text-yellow-400" />
-          </div>
-        </Card>
-      </div>
+          </Card>
 
-      <!-- Quick Actions -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <h2 class="text-lg font-bold text-gray-900 mb-4">{{ t("dashboard.quickAction") }}</h2>
-          <router-link
-            to="/hotels"
-            class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            {{ t("dashboard.manageHotels") }}
-          </router-link>
-        </Card>
+          <Card>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-gray-600 text-sm">{{ t("dashboard.pendingTasks") }}</p>
+                <p class="text-3xl font-bold text-yellow-600">
+                  {{ pendingTasks }}
+                </p>
+              </div>
+              <ClipboardList class="w-10 h-10 text-yellow-400" />
+            </div>
+          </Card>
+        </div>
 
-        <Card>
-          <h2 class="text-lg font-bold text-gray-900 mb-4">{{ t("dashboard.recentHotels") }}</h2>
-          <div v-if="recentHotels.length > 0" class="space-y-2">
-            <div
-              v-for="hotel in recentHotels"
-              :key="hotel.id"
-              class="p-3 bg-gray-50 rounded-lg"
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <h2 class="text-lg font-bold text-gray-900 mb-4">{{ t("dashboard.quickAction") }}</h2>
+            <router-link
+              to="/hotels"
+              class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
-              <p class="font-medium text-gray-900">{{ hotel.name }}</p>
-              <p class="text-sm text-gray-600">{{ hotel.description }}</p>
+              {{ t("dashboard.manageHotels") }}
+            </router-link>
+          </Card>
+
+          <Card>
+            <h2 class="text-lg font-bold text-gray-900 mb-4">{{ t("dashboard.recentHotels") }}</h2>
+            <div v-if="recentHotels.length > 0" class="space-y-2">
+              <div
+                v-for="hotel in recentHotels"
+                :key="hotel.id"
+                class="p-3 bg-gray-50 rounded-lg"
+              >
+                <p class="font-medium text-gray-900">{{ hotel.name }}</p>
+                <p class="text-sm text-gray-600">{{ hotel.description }}</p>
+              </div>
             </div>
-          </div>
-          <p v-else class="text-gray-600">{{ t("dashboard.emptyHotels") }}</p>
-        </Card>
-      </div>
+            <p v-else class="text-gray-600">{{ t("dashboard.emptyHotels") }}</p>
+          </Card>
+        </div>
+      </template>
     </div>
   </AppLayout>
 </template>
@@ -83,6 +107,7 @@ import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Card from "@/shared/components/Card.vue";
+import Shimmer from "@/shared/components/Shimmer.vue";
 import { Building2, CheckCircle2, ClipboardList } from "lucide-vue-next";
 
 const authStore = useAuthStore();

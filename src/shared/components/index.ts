@@ -6,5 +6,6 @@ export { default as Input } from "./Input.vue";
 export { default as Modal } from "./Modal.vue";
 export { default as Alert } from "./Alert.vue";
 export { default as Loading } from "./Loading.vue";
+export { default as Shimmer } from "./Shimmer.vue";
 export { default as FormGroup } from "./FormGroup.vue";
 export { default as Badge } from "./Badge.vue";
