@@ -28,9 +28,9 @@
           <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.name") }}</th>
-                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.pendingTransfers.from", { name: "" }).replace(/ Enviado por $/, "") }}</th>
-                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.pendingTransfers.expiresIn", { time: "" }).replace(/ em $/, "") }}</th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">Hotel</th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">{{ t("hotels.pendingTransfers.sentBy") }}</th>
+                <th class="text-left px-6 py-3 font-medium text-gray-600">Expira em</th>
                 <th class="text-right px-6 py-3 font-medium text-gray-600">{{ t("users.table.actions") }}</th>
               </tr>
             </thead>
@@ -63,11 +63,15 @@
 
       <Loading v-if="false" />
 
-      <!-- Shimmer skeleton while loading -->
-      <div
-        v-if="hotelStore.loading"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
+      <!-- Hotels section header -->
+      <div v-if="hotelStore.hotels.length > 0 || hotelStore.loading" class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-6">{{ t("hotels.myHotels") }}</h2>
+
+        <!-- Shimmer skeleton while loading -->
+        <div
+          v-if="hotelStore.loading"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
         <div
           v-for="i in 6"
           :key="i"
@@ -186,6 +190,7 @@
             {{ t("hotels.empty") }}
           </p>
           <Button v-if="authStore.isAdmin" @click="openAddModal">{{ t("hotels.createFirst") }}</Button>
+        </div>
         </div>
       </div>
 

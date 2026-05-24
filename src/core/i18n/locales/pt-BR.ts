@@ -78,6 +78,7 @@ export default {
   hotels: {
     title: "Hotéis",
     subtitle: "Gerencie todos os seus hotéis",
+    myHotels: "Meus Hotéis",
     add: "+ Adicionar Hotel",
     errorTitle: "Erro",
     loading: "Carregando hotéis...",
@@ -147,6 +148,7 @@ export default {
       sectionTitle: "Solicitações de Transferência Pendentes",
       sectionSubtitle:
         "Você recebeu solicitações para se tornar proprietário dos hotéis abaixo.",
+      sentBy: "Enviado por",
       from: "Enviado por {name}",
       expiresIn: "Expira em {time}",
       expired: "Expirada",
