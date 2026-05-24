@@ -4,6 +4,16 @@
 
       <!-- Logo + workspace switcher -->
       <div class="flex items-center gap-3">
+        <button
+          v-if="showMobileMenuButton"
+          class="md:hidden inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-700 shadow-sm"
+          type="button"
+          @click="emit('openMobileMenu')"
+        >
+          <Menu class="h-5 w-5" />
+          <span class="sr-only">{{ t("navigation.openMenu") }}</span>
+        </button>
+
         <img
           src="@/assets/logo.png"
           :alt="t('common.appName')"
@@ -100,8 +110,21 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
 import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
-import { Building2, ChevronsUpDown, X, Check } from "lucide-vue-next";
+import { Building2, ChevronsUpDown, X, Check, Menu } from "lucide-vue-next";
 import type { Hotel } from "@/core/utils/types";
+
+withDefaults(
+  defineProps<{
+    showMobileMenuButton?: boolean;
+  }>(),
+  {
+    showMobileMenuButton: false,
+  },
+);
+
+const emit = defineEmits<{
+  (e: "openMobileMenu"): void;
+}>();
 
 const router = useRouter();
 const authStore = useAuthStore();

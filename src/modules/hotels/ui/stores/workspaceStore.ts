@@ -24,11 +24,11 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   }
 
   function validateAgainstHotels(hotels: Hotel[]) {
-    if (
-      activeHotel.value &&
-      !hotels.find((h) => h.id === activeHotel.value!.id)
-    ) {
-      clearActiveHotel();
+    if (activeHotel.value) {
+      const found = hotels.find((h) => h.id === activeHotel.value!.id);
+      if (!found || found.status !== "ENABLED") {
+        clearActiveHotel();
+      }
     }
   }
 

@@ -1,12 +1,15 @@
 <template>
   <AppLayout>
     <div class="max-w-7xl mx-auto px-4 py-8">
-      <div class="flex justify-between items-center mb-8">
+      <div class="flex justify-between items-center gap-3 mb-8">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">{{ t("hotels.title") }}</h1>
           <p class="text-gray-600">{{ t("hotels.subtitle") }}</p>
         </div>
-        <Button v-if="authStore.isAdmin" @click="openAddModal">{{ t("hotels.add") }}</Button>
+        <Button v-if="authStore.isAdmin" :aria-label="t('hotels.add')" @click="openAddModal">
+          <span class="sm:hidden">+</span>
+          <span class="hidden sm:inline">{{ t("hotels.add") }}</span>
+        </Button>
       </div>
 
       <Alert
@@ -56,6 +59,15 @@
               :alt="t('hotels.imageAlt', { name: hotel.name })"
               class="w-full h-40 object-cover rounded-lg mb-4"
             />
+            <div
+              v-else
+              class="w-full h-40 rounded-lg mb-4 border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center"
+            >
+              <div class="flex flex-col items-center gap-1 text-gray-400">
+                <Building2 class="w-6 h-6" />
+                <span class="text-xs">{{ t("hotels.noImage") }}</span>
+              </div>
+            </div>
 
             <div class="flex items-start justify-between mb-4">
               <div class="flex-1">
@@ -63,9 +75,9 @@
                   {{ hotel.name }}
                 </h3>
                 <Badge
-                  :variant="hotel.status === 'ativo' ? 'success' : 'warning'"
+                  :variant="hotel.status === 'ENABLED' ? 'success' : hotel.status === 'DISABLED' ? 'warning' : 'secondary'"
                 >
-                  {{ statusLabel(hotel.status) }}
+                  {{ t(`hotels.statusValues.${hotel.status}`) }}
                 </Badge>
               </div>
               <div v-if="authStore.isAdmin" class="relative">
@@ -77,25 +89,29 @@
                 </button>
                 <div
                   v-if="activeMenu === hotel.id"
-                  class="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                  class="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]"
                 >
                   <button
                     @click="editHotel(hotel)"
-                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition"
+                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
                   >
                     {{ t("hotels.edit") }}
                   </button>
                   <button
-                    @click="archiveHotel(hotel.id)"
-                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-orange-600"
+                    @click="toggleStatus(hotel)"
+                    :disabled="hotel.status === 'ARCHIVED'"
+                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
+                    :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'"
                   >
-                    {{ t("hotels.archive") }}
+                    {{ t("hotels.toggleStatus") }}
                   </button>
                   <button
-                    @click="deleteHotel(hotel.id)"
-                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-red-600"
+                    @click="requestArchive(hotel)"
+                    :disabled="hotel.status === 'ARCHIVED'"
+                    class="block w-full text-left px-4 py-2 hover:bg-gray-50 transition text-sm"
+                    :class="hotel.status === 'ARCHIVED' ? 'text-gray-300 cursor-not-allowed' : 'text-orange-600'"
                   >
-                    {{ t("hotels.delete") }}
+                    {{ t("hotels.archive") }}
                   </button>
                 </div>
               </div>
@@ -141,25 +157,50 @@
               >{{ t("hotels.status") }}</label
             >
             <select
+              v-if="editingHotel"
               v-model="form.status"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="ativo">{{ t("hotels.statusValues.ativo") }}</option>
-              <option value="inativo">{{ t("hotels.statusValues.inativo") }}</option>
+              <option value="ENABLED">{{ t("hotels.statusValues.ENABLED") }}</option>
+              <option value="DISABLED">{{ t("hotels.statusValues.DISABLED") }}</option>
             </select>
+            <p v-else class="text-sm text-gray-500">{{ t("hotels.statusValues.ENABLED") }}</p>
           </div>
 
-          <div v-if="!editingHotel">
+          <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
               >{{ t("hotels.imageUploadLabel") }}</label
             >
-            <input
+
+            <div
+              v-if="existingImageUrls.length"
+              class="grid grid-cols-3 gap-2 mb-3"
+            >
+              <div
+                v-for="(imageUrl, index) in existingImageUrls"
+                :key="imageUrl"
+                class="relative"
+              >
+                <img
+                  :src="imageUrl"
+                  :alt="t('hotels.imagePreviewAlt')"
+                  class="h-20 w-full object-cover rounded-md border border-gray-200"
+                />
+                <button
+                  type="button"
+                  class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-gray-200 text-red-600 text-xs"
+                  @click="removeExistingImage(index)"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <ImagePicker
               :key="imageInputKey"
-              type="file"
-              accept="image/*"
-              multiple
-              @change="handleImageSelection"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              :maxFiles="Math.max(0, 3 - existingImageUrls.length)"
+              :disabled="savingHotel"
+              @files-selected="handleImageSelection"
             />
             <p class="text-xs text-gray-500 mt-2">
               {{ t("hotels.imageUploadHint") }}
@@ -179,6 +220,30 @@
             </div>
           </div>
         </FormGroup>
+        <template #footer>
+          <Button variant="ghost" :disabled="savingHotel" @click="closeModal">
+            {{ t("common.cancel") }}
+          </Button>
+          <Button :loading="savingHotel" :disabled="savingHotel" @click="saveHotel">
+            {{ t("common.confirm") }}
+          </Button>
+        </template>
+      </Modal>
+
+      <!-- Archive confirmation modal -->
+      <Modal
+        :isOpen="isArchiveModalOpen"
+        :title="t('hotels.archiveWarningTitle')"
+        @close="isArchiveModalOpen = false"
+        @confirm="confirmArchive"
+      >
+        <div class="flex gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg mb-2">
+          <AlertTriangle class="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+          <p class="text-sm text-orange-800">{{ t("hotels.archiveWarningMessage") }}</p>
+        </div>
+        <p class="text-sm text-gray-600 mt-3">
+          <strong>{{ archivingHotel?.name }}</strong>
+        </p>
       </Modal>
     </div>
   </AppLayout>
@@ -199,7 +264,8 @@ import Alert from "@/shared/components/Alert.vue";
 import Loading from "@/shared/components/Loading.vue";
 import Shimmer from "@/shared/components/Shimmer.vue";
 import Badge from "@/shared/components/Badge.vue";
-import { MoreVertical } from "lucide-vue-next";
+import ImagePicker from "@/shared/components/ImagePicker.vue";
+import { MoreVertical, AlertTriangle, Building2 } from "lucide-vue-next";
 import type { Hotel } from "@/core/utils/types";
 
 const hotelStore = useHotelStore();
@@ -212,44 +278,52 @@ const editingHotel = ref<Hotel | null>(null);
 const selectedImages = ref<File[]>([]);
 const imagePreviews = ref<string[]>([]);
 const imageInputKey = ref(0);
+const isArchiveModalOpen = ref(false);
+const archivingHotel = ref<Hotel | null>(null);
+const savingHotel = ref(false);
+const existingImageUrls = ref<string[]>([]);
 const form = ref({
   name: "",
   description: "",
-  status: "ativo" as const,
+  status: "ENABLED" as "ENABLED" | "DISABLED",
 });
 
 function resetSelectedImages() {
   imagePreviews.value.forEach((url) => URL.revokeObjectURL(url));
   selectedImages.value = [];
   imagePreviews.value = [];
+  existingImageUrls.value = [];
   imageInputKey.value += 1;
 }
 
-function handleImageSelection(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const files = Array.from(input.files || []);
+function resetNewSelectedImages() {
+  imagePreviews.value.forEach((url) => URL.revokeObjectURL(url));
+  selectedImages.value = [];
+  imagePreviews.value = [];
+  imageInputKey.value += 1;
+}
 
-  if (files.length > 3) {
+function handleImageSelection(files: File[]) {
+
+  if (files.length + existingImageUrls.value.length > 3) {
     alert(t("hotels.maxImagesError"));
-    input.value = "";
     return;
   }
 
   const hasInvalidType = files.some((file) => !file.type.startsWith("image/"));
   if (hasInvalidType) {
     alert(t("hotels.invalidImageError"));
-    input.value = "";
     return;
   }
 
-  resetSelectedImages();
+  resetNewSelectedImages();
   selectedImages.value = files;
   imagePreviews.value = files.map((file) => URL.createObjectURL(file));
 }
 
 function openAddModal() {
   editingHotel.value = null;
-  form.value = { name: "", description: "", status: "ativo" };
+  form.value = { name: "", description: "", status: "ENABLED" };
   resetSelectedImages();
   isModalOpen.value = true;
 }
@@ -259,10 +333,18 @@ function editHotel(hotel: Hotel) {
   form.value = {
     name: hotel.name,
     description: hotel.description || "",
-    status: hotel.status,
+    status: hotel.status === "ARCHIVED" ? "ENABLED" : hotel.status,
   };
+  existingImageUrls.value = [...(hotel.image_urls || [])];
+  selectedImages.value = [];
+  imagePreviews.value = [];
+  imageInputKey.value += 1;
   isModalOpen.value = true;
   activeMenu.value = null;
+}
+
+function removeExistingImage(index: number) {
+  existingImageUrls.value.splice(index, 1);
 }
 
 function closeModal() {
@@ -272,38 +354,55 @@ function closeModal() {
 }
 
 async function saveHotel() {
-  if (!form.value.name) return;
+  if (!form.value.name || savingHotel.value) return;
 
+  savingHotel.value = true;
   try {
     if (editingHotel.value) {
-      await hotelStore.updateHotel(editingHotel.value.id, form.value);
+      const result = await hotelStore.updateHotel(editingHotel.value.id, {
+        name: form.value.name,
+        description: form.value.description,
+        status: form.value.status,
+        image_urls: existingImageUrls.value,
+      }, selectedImages.value);
+      if (!result) return;
     } else {
-      await hotelStore.createHotel(
+      const result = await hotelStore.createHotel(
         {
           name: form.value.name,
           description: form.value.description,
-          status: form.value.status,
-          archived: false,
         },
         selectedImages.value,
       );
+      if (!result) return;
     }
     closeModal();
   } catch (error) {
     console.error(t("hotels.saveError"), error);
+  } finally {
+    savingHotel.value = false;
   }
 }
 
-async function deleteHotel(id: string) {
-  if (confirm(t("hotels.deleteConfirm"))) {
-    await hotelStore.deleteHotel(id);
-    activeMenu.value = null;
-  }
-}
-
-async function archiveHotel(id: string) {
-  await hotelStore.updateHotel(id, { archived: true });
+async function toggleStatus(hotel: Hotel) {
+  if (hotel.status === "ARCHIVED") return;
+  const newStatus = hotel.status === "ENABLED" ? "DISABLED" : "ENABLED";
+  await hotelStore.updateHotel(hotel.id, { status: newStatus });
   activeMenu.value = null;
+}
+
+function requestArchive(hotel: Hotel) {
+  if (hotel.status === "ARCHIVED") return;
+  archivingHotel.value = hotel;
+  isArchiveModalOpen.value = true;
+  activeMenu.value = null;
+}
+
+async function confirmArchive() {
+  if (!archivingHotel.value) return;
+  await hotelStore.archiveHotel(archivingHotel.value.id);
+  isArchiveModalOpen.value = false;
+  archivingHotel.value = null;
 }
 
 function openMenu(hotelId: string) {
@@ -312,10 +411,6 @@ function openMenu(hotelId: string) {
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString(locale.value);
-}
-
-function statusLabel(status: "ativo" | "inativo") {
-  return t(`hotels.statusValues.${status}`);
 }
 
 onMounted(async () => {

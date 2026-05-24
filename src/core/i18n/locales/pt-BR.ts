@@ -18,6 +18,7 @@ export default {
     users: "Usuários",
     logout: "Sair",
     admin: "Admin",
+    openMenu: "Abrir menu",
   },
   auth: {
     login: {
@@ -35,8 +36,8 @@ export default {
       successTitle: "Usuário criado",
       fullName: "Nome Completo",
       fullNamePlaceholder: "Seu Nome",
-      username: "Username",
-      usernamePlaceholder: "novo_usuario",
+      username: "Login",
+      usernamePlaceholder: "Nome de usuário",
       password: "Senha",
       confirmPassword: "Confirmar Senha",
       passwordMismatch: "As senhas não coincidem",
@@ -62,9 +63,12 @@ export default {
   dashboard: {
     title: "Dashboard",
     welcome: "Bem-vindo de volta, {name}!",
-    totalHotels: "Total de Hotéis",
-    activeHotels: "Hotéis Ativos",
+    workspaceOverview: "Workspace atual",
+    noWorkspaceSelected: "Nenhum hotel selecionado",
+    workspaceImages: "Imagens do hotel",
+    noWorkspaceImages: "Este hotel ainda não possui imagens",
     pendingTasks: "Tarefas Pendentes",
+    pendingTasksDescription: "Acompanhamento das tarefas deste hotel",
     quickAction: "Ação Rápida",
     manageHotels: "Gerenciar Hotéis",
     recentHotels: "Últimos Hotéis",
@@ -93,6 +97,13 @@ export default {
     imageUploadLabel: "Imagens (até 3)",
     imageUploadHint: "Formatos de imagem suportados. Máximo de 3 arquivos.",
     imagePreviewAlt: "Pré-visualização",
+    noImage: "Sem imagem",
+    imagePicker: {
+      cameraBack: "Câmera Traseira",
+      cameraFront: "Câmera Frontal",
+      gallery: "Galeria",
+      hint: "No celular, você pode escolher entre câmera frontal, traseira ou galeria.",
+    },
     maxImagesError: "Você pode selecionar no máximo 3 imagens.",
     invalidImageError: "Selecione apenas arquivos de imagem.",
     saveError: "Erro ao salvar hotel:",
@@ -105,9 +116,14 @@ export default {
       deleteHotel: "Falha ao excluir hotel.",
     },
     statusValues: {
-      ativo: "Ativo",
-      inativo: "Inativo",
+      ENABLED: "Ativo",
+      DISABLED: "Inativo",
+      ARCHIVED: "Arquivado",
     },
+    toggleStatus: "Alterar Status",
+    archiveWarningTitle: "Atenção: Ação Irreversível",
+    archiveWarningMessage:
+      "Ao arquivar este hotel, ele não poderá mais ser selecionado pelos usuários e seu status não poderá ser alterado. Esta ação é permanente.",
   },
   button: {
     loading: "Carregando...",
@@ -151,6 +167,7 @@ export default {
       fetchUsers: "Falha ao carregar usuários.",
       createUser: "Falha ao criar usuário.",
       updateHotels: "Falha ao atualizar hotéis do usuário.",
+      selectHotelRequired: "Selecione ao menos um hotel para o usuário.",
     },
   },
 };

@@ -22,7 +22,7 @@
 
       <!-- No hotels -->
       <div
-        v-else-if="hotelStore.hotels.length === 0"
+        v-else-if="selectableHotels.length === 0"
         class="text-center bg-white rounded-2xl p-10 shadow-md"
       >
         <Building2 class="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -35,7 +35,7 @@
       <!-- Hotel cards -->
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
-          v-for="hotel in hotelStore.hotels"
+          v-for="hotel in selectableHotels"
           :key="hotel.id"
           @click="selectHotel(hotel)"
           class="bg-white rounded-2xl p-5 shadow border-2 border-transparent hover:border-blue-500 hover:shadow-lg transition text-left group"
@@ -56,7 +56,7 @@
             </div>
           </div>
           <div class="mt-3 flex items-center gap-2">
-            <Badge :variant="hotel.status === 'ativo' ? 'success' : 'warning'">
+            <Badge :variant="hotel.status === 'ENABLED' ? 'success' : hotel.status === 'DISABLED' ? 'warning' : 'secondary'">
               {{ t(`hotels.statusValues.${hotel.status}`) }}
             </Badge>
             <Badge v-if="hotel.my_role === 'owner'" variant="primary">
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
@@ -99,6 +99,10 @@ const { t } = useI18n();
 
 const loading = ref(false);
 
+const selectableHotels = computed(() =>
+  hotelStore.hotels.filter((h) => h.status === "ENABLED"),
+);
+
 function selectHotel(hotel: Hotel) {
   workspaceStore.setActiveHotel(hotel);
   router.push("/dashboard");
@@ -111,8 +115,11 @@ async function handleLogout() {
 
 onMounted(async () => {
   loading.value = true;
-  await hotelStore.fetchHotels();
-  loading.value = false;
+  try {
+    await hotelStore.fetchHotels();
+  } finally {
+    loading.value = false;
+  }
 
   // Validate that stored active hotel still belongs to the user
   workspaceStore.validateAgainstHotels(hotelStore.hotels);
@@ -123,9 +130,9 @@ onMounted(async () => {
     return;
   }
 
-  // Auto-select when user has exactly one hotel
-  if (hotelStore.hotels.length === 1) {
-    selectHotel(hotelStore.hotels[0]);
+  // Auto-select when user has exactly one selectable hotel
+  if (selectableHotels.value.length === 1) {
+    selectHotel(selectableHotels.value[0]);
   }
 });
 </script>

@@ -18,9 +18,8 @@ export interface Hotel {
   id: string;
   name: string;
   description?: string | null;
-  status: "ativo" | "inativo";
+  status: "ENABLED" | "DISABLED" | "ARCHIVED";
   image_urls?: string[];
-  archived: boolean;
   my_role?: "owner" | "collaborator";
   created_at: string;
   updated_at: string;

@@ -50,6 +50,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
+import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
 import FormGroup from "@/shared/components/FormGroup.vue";
 import Input from "@/shared/components/Input.vue";
 import Button from "@/shared/components/Button.vue";
@@ -57,6 +58,7 @@ import Alert from "@/shared/components/Alert.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const workspaceStore = useWorkspaceStore();
 const { t } = useI18n();
 
 const username = ref("");
@@ -68,8 +70,13 @@ async function handleLogin() {
   loading.value = true;
   error.value = "";
   try {
-    await authStore.login(username.value, password.value);
-    router.push("/hotel-select");
+    const data = await authStore.login(username.value, password.value);
+    if (data.hotels.length === 1) {
+      workspaceStore.setActiveHotel(data.hotels[0]);
+      router.push("/dashboard");
+    } else {
+      router.push("/hotel-select");
+    }
   } catch (err) {
     error.value =
       err instanceof Error ? err.message : t("auth.login.errorFallback");

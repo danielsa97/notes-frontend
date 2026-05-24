@@ -9,3 +9,4 @@ export { default as Loading } from "./Loading.vue";
 export { default as Shimmer } from "./Shimmer.vue";
 export { default as FormGroup } from "./FormGroup.vue";
 export { default as Badge } from "./Badge.vue";
+export { default as ImagePicker } from "./ImagePicker.vue";

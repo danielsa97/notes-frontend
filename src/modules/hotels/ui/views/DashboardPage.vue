@@ -10,19 +10,25 @@
 
       <!-- Skeleton while loading -->
       <template v-if="hotelStore.loading">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card v-for="i in 3" :key="i">
-            <div class="flex items-center justify-between">
-              <div class="flex-1 space-y-2">
-                <Shimmer height="0.75rem" width="55%" />
-                <Shimmer height="2rem" width="3.5rem" />
-              </div>
-              <Shimmer height="2.5rem" width="2.5rem" rounded="full" class="ml-4 flex-shrink-0" />
+        <Card class="mb-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <Shimmer height="0.75rem" width="35%" />
+              <Shimmer height="2rem" width="65%" />
+              <Shimmer height="1rem" width="95%" />
+              <Shimmer height="1rem" width="80%" />
             </div>
-          </Card>
-        </div>
+            <div class="grid grid-cols-3 gap-3">
+              <Shimmer v-for="i in 3" :key="i" height="6rem" rounded="xl" />
+            </div>
+          </div>
+        </Card>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card v-for="i in 2" :key="i">
+          <Card>
+            <Shimmer height="1rem" width="45%" class="mb-4" />
+            <Shimmer height="2.5rem" width="55%" />
+          </Card>
+          <Card>
             <Shimmer height="1rem" width="45%" class="mb-4" />
             <Shimmer height="2.5rem" width="55%" />
           </Card>
@@ -31,42 +37,55 @@
 
       <!-- Content -->
       <template v-else>
-        <!-- Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-gray-600 text-sm">{{ t("dashboard.totalHotels") }}</p>
-                <p class="text-3xl font-bold text-gray-900">{{ totalHotels }}</p>
+        <Card class="mb-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                {{ t("dashboard.workspaceOverview") }}
+              </p>
+              <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                {{ currentHotel?.name || t("dashboard.noWorkspaceSelected") }}
+              </h2>
+              <p class="text-gray-600 mb-4">
+                {{ currentHotel?.description || t("workspace.noDescription") }}
+              </p>
+              <div
+                v-if="currentHotel"
+                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+                :class="
+                  currentHotel.status === 'ENABLED'
+                    ? 'bg-green-100 text-green-700'
+                    : currentHotel.status === 'DISABLED'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-gray-100 text-gray-700'
+                "
+              >
+                {{ t(`hotels.statusValues.${currentHotel.status}`) }}
               </div>
-              <Building2 class="w-10 h-10 text-gray-400" />
             </div>
-          </Card>
 
-          <Card>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-gray-600 text-sm">{{ t("dashboard.activeHotels") }}</p>
-                <p class="text-3xl font-bold text-green-600">
-                  {{ activeHotels }}
-                </p>
+            <div>
+              <p class="text-sm font-medium text-gray-700 mb-3">
+                {{ t("dashboard.workspaceImages") }}
+              </p>
+              <div v-if="hotelImages.length" class="grid grid-cols-3 gap-3">
+                <img
+                  v-for="(image, index) in hotelImages"
+                  :key="`${image}-${index}`"
+                  :src="image"
+                  :alt="t('hotels.imageAlt', { name: currentHotel?.name || t('common.appName') })"
+                  class="h-24 w-full rounded-xl object-cover"
+                />
               </div>
-              <CheckCircle2 class="w-10 h-10 text-green-400" />
-            </div>
-          </Card>
-
-          <Card>
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-gray-600 text-sm">{{ t("dashboard.pendingTasks") }}</p>
-                <p class="text-3xl font-bold text-yellow-600">
-                  {{ pendingTasks }}
-                </p>
+              <div
+                v-else
+                class="h-24 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-sm text-gray-500"
+              >
+                {{ t("dashboard.noWorkspaceImages") }}
               </div>
-              <ClipboardList class="w-10 h-10 text-yellow-400" />
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -81,18 +100,14 @@
           </Card>
 
           <Card>
-            <h2 class="text-lg font-bold text-gray-900 mb-4">{{ t("dashboard.recentHotels") }}</h2>
-            <div v-if="recentHotels.length > 0" class="space-y-2">
-              <div
-                v-for="hotel in recentHotels"
-                :key="hotel.id"
-                class="p-3 bg-gray-50 rounded-lg"
-              >
-                <p class="font-medium text-gray-900">{{ hotel.name }}</p>
-                <p class="text-sm text-gray-600">{{ hotel.description }}</p>
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-gray-900 mb-1">{{ t("dashboard.pendingTasks") }}</h2>
+                <p class="text-sm text-gray-600">{{ t("dashboard.pendingTasksDescription") }}</p>
               </div>
+              <ClipboardList class="w-10 h-10 text-yellow-400" />
             </div>
-            <p v-else class="text-gray-600">{{ t("dashboard.emptyHotels") }}</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-4">{{ pendingTasks }}</p>
           </Card>
         </div>
       </template>
@@ -105,25 +120,31 @@ import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { useHotelStore } from "@/modules/hotels/ui/stores/hotelStore";
+import { useWorkspaceStore } from "@/modules/hotels/ui/stores/workspaceStore";
 import AppLayout from "@/shared/layouts/AppLayout.vue";
 import Card from "@/shared/components/Card.vue";
 import Shimmer from "@/shared/components/Shimmer.vue";
-import { Building2, CheckCircle2, ClipboardList } from "lucide-vue-next";
+import { ClipboardList } from "lucide-vue-next";
 
 const authStore = useAuthStore();
 const hotelStore = useHotelStore();
+const workspaceStore = useWorkspaceStore();
 const { t } = useI18n();
 
 const userName = computed(
   () => authStore.user?.full_name?.split(" ")[0] || t("common.userFallback"),
 );
-const totalHotels = computed(() => hotelStore.hotels.length);
-const activeHotels = computed(() => hotelStore.activeHotels.length);
 const pendingTasks = computed(() => 0); // TODO: implementar
-const recentHotels = computed(() => hotelStore.hotels.slice(0, 3));
+const currentHotel = computed(() => {
+  const activeId = workspaceStore.activeHotel?.id;
+  if (!activeId) return null;
+  return hotelStore.hotels.find((hotel) => hotel.id === activeId) || workspaceStore.activeHotel;
+});
+const hotelImages = computed(() => currentHotel.value?.image_urls?.filter(Boolean).slice(0, 3) || []);
 
 onMounted(async () => {
   await hotelStore.fetchHotels();
+  workspaceStore.validateAgainstHotels(hotelStore.hotels);
 });
 </script>
 

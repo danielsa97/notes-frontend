@@ -16,9 +16,10 @@ export default {
   navigation: {
     dashboard: "Dashboard",
     hotels: "Hotels",
-    newUser: "New User",
+    users: "Users",
     logout: "Logout",
     admin: "Admin",
+    openMenu: "Open menu",
   },
   auth: {
     login: {
@@ -65,9 +66,12 @@ export default {
   dashboard: {
     title: "Dashboard",
     welcome: "Welcome back, {name}!",
-    totalHotels: "Total Hotels",
-    activeHotels: "Active Hotels",
+    workspaceOverview: "Current workspace",
+    noWorkspaceSelected: "No hotel selected",
+    workspaceImages: "Hotel images",
+    noWorkspaceImages: "This hotel has no images yet",
     pendingTasks: "Pending Tasks",
+    pendingTasksDescription: "Tracking tasks for this hotel",
     quickAction: "Quick Action",
     manageHotels: "Manage Hotels",
     recentHotels: "Recent Hotels",
@@ -96,6 +100,13 @@ export default {
     imageUploadLabel: "Images (up to 3)",
     imageUploadHint: "Supported image formats. Maximum 3 files.",
     imagePreviewAlt: "Preview",
+    noImage: "No image",
+    imagePicker: {
+      cameraBack: "Back Camera",
+      cameraFront: "Front Camera",
+      gallery: "Gallery",
+      hint: "On mobile, choose front camera, back camera, or gallery.",
+    },
     maxImagesError: "You can select up to 3 images.",
     invalidImageError: "Select only image files.",
     saveError: "Error while saving hotel:",
@@ -114,5 +125,10 @@ export default {
   },
   button: {
     loading: "Loading...",
+  },
+  users: {
+    errors: {
+      selectHotelRequired: "Select at least one hotel for the user.",
+    },
   },
 };

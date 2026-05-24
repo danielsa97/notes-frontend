@@ -14,9 +14,11 @@ export const useHotelStore = defineStore("hotel", () => {
   const error = ref<string | null>(null);
 
   const activeHotels = computed(() =>
-    hotels.value.filter((h) => !h.archived && h.status === "ativo"),
+    hotels.value.filter((h) => h.status === "ENABLED"),
   );
-  const archivedHotels = computed(() => hotels.value.filter((h) => h.archived));
+  const archivedHotels = computed(() =>
+    hotels.value.filter((h) => h.status === "ARCHIVED"),
+  );
 
   async function fetchHotels() {
     loading.value = true;
@@ -74,7 +76,11 @@ export const useHotelStore = defineStore("hotel", () => {
     }
   }
 
-  async function updateHotel(id: string, updates: Partial<Hotel>) {
+  async function updateHotel(
+    id: string,
+    updates: Partial<Hotel>,
+    imageFiles: File[] = [],
+  ) {
     loading.value = true;
     error.value = null;
     try {
@@ -83,6 +89,7 @@ export const useHotelStore = defineStore("hotel", () => {
         id,
         updates,
         token,
+        imageFiles,
       );
       if (err) throw err;
       const index = hotels.value.findIndex((h) => h.id === id);
@@ -98,17 +105,20 @@ export const useHotelStore = defineStore("hotel", () => {
     }
   }
 
-  async function deleteHotel(id: string) {
+  async function archiveHotel(id: string) {
     loading.value = true;
     error.value = null;
     try {
       const token = useAuthStore().token ?? "";
-      const { error: err } = await hotelService.deleteHotel(id, token);
+      const { data, error: err } = await hotelService.archiveHotel(id, token);
       if (err) throw err;
-      hotels.value = hotels.value.filter((h) => h.id !== id);
+      const index = hotels.value.findIndex((h) => h.id === id);
+      if (index !== -1 && data) {
+        hotels.value[index] = data;
+      }
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : t("hotels.errors.deleteHotel");
+        err instanceof Error ? err.message : t("hotels.errors.updateHotel");
     } finally {
       loading.value = false;
     }
@@ -125,6 +135,6 @@ export const useHotelStore = defineStore("hotel", () => {
     fetchHotelById,
     createHotel,
     updateHotel,
-    deleteHotel,
+    archiveHotel,
   };
 });

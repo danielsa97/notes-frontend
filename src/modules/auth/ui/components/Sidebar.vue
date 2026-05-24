@@ -1,10 +1,11 @@
 <template>
-  <aside class="hidden md:flex flex-col w-64 bg-white border-r border-gray-200">
+  <aside :class="asideClasses">
     <nav class="flex-1 px-4 py-8 space-y-2">
       <router-link
         v-for="item in navItems"
         :key="item.path"
         :to="item.path"
+        @click="handleNavigate"
         class="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
         :class="{ 'bg-blue-50 text-blue-600 font-medium': isActive(item.path) }"
       >
@@ -40,6 +41,21 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
 import { LayoutDashboard, Building2, Users } from "lucide-vue-next";
 
+const props = withDefaults(
+  defineProps<{
+    mobile?: boolean;
+    isOpen?: boolean;
+  }>(),
+  {
+    mobile: false,
+    isOpen: false,
+  },
+);
+
+const emit = defineEmits<{
+  (e: "close"): void;
+}>();
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -52,6 +68,17 @@ const navItems = computed(() => [
     ? [{ path: "/users", label: t("navigation.users"), icon: Users }]
     : []),
 ]);
+
+const asideClasses = computed(() => {
+  if (!props.mobile) {
+    return "hidden md:flex flex-col w-64 bg-white border-r border-gray-200";
+  }
+
+  return [
+    "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white border-r border-gray-200 transition-transform duration-200 md:hidden",
+    props.isOpen ? "translate-x-0" : "-translate-x-full",
+  ];
+});
 
 const userName = computed(() => authStore.user?.full_name || t("common.userFallback"));
 const userEmail = computed(() => {
@@ -74,7 +101,16 @@ function isActive(path: string) {
   return route.path === path || route.path.startsWith(path + "/");
 }
 
+function handleNavigate() {
+  if (props.mobile) {
+    emit("close");
+  }
+}
+
 async function handleLogout() {
+  if (props.mobile) {
+    emit("close");
+  }
   await authStore.logout();
   router.push("/login");
 }

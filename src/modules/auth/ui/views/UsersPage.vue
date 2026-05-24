@@ -1,12 +1,15 @@
 <template>
   <AppLayout>
     <div class="max-w-7xl mx-auto px-4 py-8">
-      <div class="flex justify-between items-center mb-8">
+      <div class="flex justify-between items-center gap-3 mb-8">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">{{ t("users.title") }}</h1>
           <p class="text-gray-600">{{ t("users.subtitle") }}</p>
         </div>
-        <Button @click="openCreateModal">{{ t("users.add") }}</Button>
+        <Button :aria-label="t('users.add')" @click="openCreateModal">
+          <span class="sm:hidden">+</span>
+          <span class="hidden sm:inline">{{ t("users.add") }}</span>
+        </Button>
       </div>
 
       <Alert
@@ -174,6 +177,14 @@
           </div>
         </div>
       </FormGroup>
+      <template #footer>
+        <Button variant="ghost" :disabled="saving" @click="closeCreateModal">
+          {{ t("common.cancel") }}
+        </Button>
+        <Button :loading="saving" :disabled="saving" @click="handleCreate">
+          {{ t("common.confirm") }}
+        </Button>
+      </template>
     </Modal>
 
     <!-- Hotel membership management modal -->
@@ -328,8 +339,14 @@ async function loadUsers() {
 }
 
 async function handleCreate() {
+  if (saving.value) return;
+
   if (form.value.password !== form.value.confirmPassword) {
     createError.value = t("auth.register.passwordMismatch");
+    return;
+  }
+  if (form.value.selectedHotelIds.length === 0) {
+    createError.value = t("users.errors.selectHotelRequired");
     return;
   }
   if (!form.value.fullName || !form.value.username || !form.value.password) return;
@@ -345,7 +362,7 @@ async function handleCreate() {
       form.value.isAdmin,
     );
 
-    if (result?.user?.id && form.value.selectedHotelIds.length > 0) {
+    if (result?.user?.id) {
       const token = authStore.token ?? "";
       await authService.updateUserHotels(
         result.user.id,
@@ -354,9 +371,8 @@ async function handleCreate() {
       );
     }
 
-    createSuccess.value = t("auth.register.successMessage");
     await loadUsers();
-    resetForm();
+    closeCreateModal();
   } catch (err) {
     createError.value = err instanceof Error ? err.message : t("users.errors.createUser");
   } finally {

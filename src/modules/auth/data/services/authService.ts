@@ -1,8 +1,9 @@
 import { apiRequest } from "@/core/utils/apiClient";
-import type { User } from "@/core/utils/types";
+import type { Hotel, User } from "@/core/utils/types";
 
 type LoginResponse = {
   token: string;
+  hotels: Hotel[];
   user: {
     id: string;
     username: string;
