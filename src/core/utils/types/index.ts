@@ -84,38 +84,88 @@ export type TaskStatus =
   | "EM_ANDAMENTO"
   | "CONCLUIDA"
   | "CANCELADA";
-
-export interface TaskRoom {
-  task_id: string;
-  room_id: string;
-  room: { id: string; room_id: string; type: string };
-}
-
-export interface TaskComment {
-  id: string;
-  task_id: string;
-  user_id: string;
-  body: string;
-  image_urls: string[];
-  user: { id: string; full_name: string; username: string };
-  created_at: string;
-  updated_at: string;
-}
+export type TaskType = "ROTINEIRA" | "ESPORADICA" | "MANUTENCAO";
+export type TaskFrequency = "DIARIA" | "UNICA";
 
 export interface Task {
   id: string;
   title: string;
   description?: string | null;
   status: TaskStatus;
+  type: TaskType;
+  frequency: TaskFrequency;
+  starts_on?: string | null;
+  ends_on?: string | null;
   due_date?: string | null;
   image_urls: string[];
   is_common_area: boolean;
-  completed_at?: string | null;
   hotel_id: string;
   created_by_id: string;
   created_by: { id: string; full_name: string; username: string };
-  rooms: TaskRoom[];
-  comments?: TaskComment[];
   created_at: string;
   updated_at: string;
+}
+
+export interface TaskRunItem {
+  id: string;
+  task_run_id: string;
+  room_id: string;
+  status: TaskStatus;
+  execution_note?: string | null;
+  execution_image_urls: string[];
+  completed_at?: string | null;
+  room: { id: string; room_id: string; type: string };
+  updated_by?: { id: string; full_name: string; username: string } | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskRun {
+  id: string;
+  task_id: string;
+  hotel_id: string;
+  run_date: string;
+  status: TaskStatus;
+  completed_at?: string | null;
+  task: Task;
+  items: TaskRunItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DailyTaskOverview {
+  date: string;
+  totalRuns: number;
+  byStatus: Record<TaskStatus, number>;
+  totalItemsPending: number;
+  roomsWithPending: Array<{ roomId: string; pendingCount: number }>;
+}
+
+export interface TaskHistoryDay {
+  date: string;
+  total: number;
+  pendente: number;
+  emAndamento: number;
+  concluida: number;
+  cancelada: number;
+}
+
+export interface TaskHistoryPeriod {
+  from: string;
+  to: string;
+  totalRuns: number;
+  byDay: TaskHistoryDay[];
+}
+
+export interface RecurringRoomIssue {
+  roomId: string;
+  occurrences: number;
+  latestDate: string;
+  examples: string[];
+}
+
+export interface RecurringRoomIssuesResponse {
+  periodDays: number;
+  minOccurrences: number;
+  recurringRooms: RecurringRoomIssue[];
 }
