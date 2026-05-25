@@ -48,6 +48,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true, requiresWorkspace: true },
   },
   {
+    path: "/tasks",
+    component: () => import("@/modules/tasks/ui/views/TasksPage.vue"),
+    meta: { requiresAuth: true, requiresWorkspace: true },
+  },
+  {
     path: "/:pathMatch(.*)*",
     redirect: "/hotel-select",
   },

@@ -46,7 +46,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
-import { LayoutDashboard, Building2, BedDouble, Users } from "lucide-vue-next";
+import { LayoutDashboard, Building2, BedDouble, Users, ClipboardList } from "lucide-vue-next";
 
 const props = withDefaults(
   defineProps<{
@@ -72,6 +72,7 @@ const navItems = computed(() => [
   { path: "/dashboard", label: t("navigation.dashboard"), icon: LayoutDashboard },
   { path: "/hotels", label: t("navigation.hotels"), icon: Building2 },
   { path: "/rooms", label: t("navigation.rooms"), icon: BedDouble },
+  { path: "/tasks", label: t("navigation.tasks"), icon: ClipboardList },
   ...(authStore.user?.is_admin
     ? [{ path: "/users", label: t("navigation.users"), icon: Users }]
     : []),

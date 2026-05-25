@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-export type BadgeVariant = "primary" | "success" | "warning" | "danger";
+export type BadgeVariant = "primary" | "success" | "warning" | "danger" | "info" | "secondary";
 
 interface Props {
   variant?: BadgeVariant;
@@ -30,6 +30,10 @@ const variantClasses = computed(() => {
       return "bg-yellow-100 text-yellow-800";
     case "danger":
       return "bg-red-100 text-red-800";
+    case "info":
+      return "bg-blue-100 text-blue-800";
+    case "secondary":
+      return "bg-gray-100 text-gray-600";
     default:
       return "bg-blue-100 text-blue-800";
   }

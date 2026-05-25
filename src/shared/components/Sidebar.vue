@@ -36,7 +36,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/modules/auth/ui/stores/authStore";
-import { LayoutDashboard, Building2 } from "lucide-vue-next";
+import { LayoutDashboard, Building2, BedDouble, ClipboardList } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -46,6 +46,8 @@ const { t } = useI18n();
 const navItems = computed(() => [
   { path: "/dashboard", label: t("navigation.dashboard"), icon: LayoutDashboard },
   { path: "/hotels", label: t("navigation.hotels"), icon: Building2 },
+  { path: "/rooms", label: t("navigation.rooms"), icon: BedDouble },
+  { path: "/tasks", label: t("navigation.tasks"), icon: ClipboardList },
 ]);
 
 const userName = computed(() => authStore.user?.full_name || t("common.userFallback"));

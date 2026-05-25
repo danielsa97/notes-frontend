@@ -77,3 +77,45 @@ export interface Activity {
   created_at: string;
   updated_at: string;
 }
+
+// Tasks module types
+export type TaskStatus =
+  | "PENDENTE"
+  | "EM_ANDAMENTO"
+  | "CONCLUIDA"
+  | "CANCELADA";
+
+export interface TaskRoom {
+  task_id: string;
+  room_id: string;
+  room: { id: string; room_id: string; type: string };
+}
+
+export interface TaskComment {
+  id: string;
+  task_id: string;
+  user_id: string;
+  body: string;
+  image_urls: string[];
+  user: { id: string; full_name: string; username: string };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: TaskStatus;
+  due_date?: string | null;
+  image_urls: string[];
+  is_common_area: boolean;
+  completed_at?: string | null;
+  hotel_id: string;
+  created_by_id: string;
+  created_by: { id: string; full_name: string; username: string };
+  rooms: TaskRoom[];
+  comments?: TaskComment[];
+  created_at: string;
+  updated_at: string;
+}
